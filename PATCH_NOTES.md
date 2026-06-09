@@ -1,24 +1,24 @@
-# BBJF Designation Scope Patch
+# BBJF card front/back information split patch
 
-This patch keeps the app limited to the membership portal scope and improves office-bearer designation data.
+## Scope
+Membership portal card layout only.
 
-## Added fields
+## Changes
+- Front side now highlights only:
+  - Member Name
+  - Father Name
+  - Designation
+  - Designation Level
+  - Designation Area / Jurisdiction
+  - Approved Date
+  - Status
+- Front side no longer repeats CNIC, mobile, district, taluka, blood group, profession, or wing/category in the main detail grid.
+- Back side keeps the remaining member information.
+- Back side no longer repeats:
+  - Designation
+  - Designation Level
+  - Designation Area / Jurisdiction
+- Status label now uses the actual member status translation instead of hardcoded Approved.
 
-- `designation_level` — UC, City, Taluka, District, Divisional, or Provincial.
-- `designation_area` — the actual jurisdiction/area for the designation, for example UC Kunri-1, City Kunri, Taluka Kunri, District Umerkot, Mirpurkhas Division, or Sindh Province.
-
-## Updated screens
-
-- Register form profile step
-- Dashboard member profile
-- Admin members list and search
-- Admin member detail
-- User digital card
-- Admin card preview
-- Public verification page
-
-## Suggested meaning
-
-- Designation / Office Title: the role, for example Vice President.
-- Designation Level: the organizational level, for example District.
-- Designation Area / Jurisdiction: where that role applies, for example District Umerkot.
+## Changed file
+- src/components/MembershipCard.tsx

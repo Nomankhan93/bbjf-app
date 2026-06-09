@@ -157,23 +157,16 @@ function CardFront({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Info label={t('card.fatherName')} value={member.father_name} />
-              <Info label={t('dashboard.cnic')} value={member.cnic} />
-              <Info label={t('card.mobile')} value={member.mobile} />
-              <Info label={t('dashboard.district')} value={member.district} />
-              <Info label={t('card.talukaTown')} value={member.taluka} />
-              <Info label={t('dashboard.bloodGroup')} value={member.blood_group} />
-              <Info label={t('dashboard.profession')} value={member.profession} />
               <Info label={t('dashboard.designation')} value={member.designation} />
               <Info label={t('dashboard.designationLevel')} value={member.designation_level} />
               <Info label={t('dashboard.designationArea')} value={member.designation_area} />
-              <Info label={t('card.wingCategory')} value={member.caste_branch} />
               <Info
                 label={t('card.approvedDate')}
                 value={formatDate(member.approved_at, language)}
               />
               <Info
                 label={t('admin.table.status')}
-                value={t('common.status.approved')}
+                value={statusLabel(member.status, t)}
               />
             </div>
           </div>
@@ -271,9 +264,6 @@ function CardBack({
                 />
                 <Info label={t('dashboard.bloodGroup')} value={member.blood_group} />
                 <Info label={t('dashboard.profession')} value={member.profession} />
-                <Info label={t('dashboard.designation')} value={member.designation} />
-                <Info label={t('dashboard.designationLevel')} value={member.designation_level} />
-                <Info label={t('dashboard.designationArea')} value={member.designation_area} />
                 <Info label={t('card.wingCategory')} value={member.caste_branch} />
               </div>
             </div>
@@ -339,6 +329,16 @@ function CardBack({
       </div>
     </section>
   )
+}
+
+
+function statusLabel(
+  status: MembershipCardMember['status'],
+  t: ReturnType<typeof useI18n>['t'],
+) {
+  if (status === 'approved') return t('common.status.approved')
+  if (status === 'rejected') return t('common.status.rejected')
+  return t('common.status.pending')
 }
 
 function CardWatermark({ brandIconUrl }: { brandIconUrl: string | null }) {
