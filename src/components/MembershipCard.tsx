@@ -1,4 +1,5 @@
 import { forwardRef } from 'react'
+import { useI18n } from '../lib/i18n'
 
 export const APP_NAME = 'Bilawal Bhutto Jayala Federation'
 export const APP_SHORT_NAME = 'BBJF'
@@ -73,8 +74,13 @@ function CardFront({
   brandIconUrl: string | null
   qrUrl: string | null
 }) {
+  const { t, direction, language } = useI18n()
+
   return (
-    <section className="overflow-hidden rounded-[1.65rem] border border-slate-900/10 bg-white">
+    <section
+      className="overflow-hidden rounded-[1.65rem] border border-slate-900/10 bg-white"
+      dir={direction}
+    >
       <div className="relative overflow-hidden bg-black p-7 text-white">
         <div className="absolute inset-y-0 left-0 w-1/3 bg-red-600" />
         <div className="absolute inset-y-0 left-1/3 w-1/3 bg-black" />
@@ -96,16 +102,16 @@ function CardFront({
                 {APP_NAME}
               </p>
               <h2 className="mt-2 text-4xl font-black tracking-tight">
-                Digital Member ID
+                {t('card.digitalMemberId')}
               </h2>
               <p className="mt-2 text-sm text-white/90">
-                Official {APP_SHORT_NAME} verified membership card
+                {t('card.officialVerified')}
               </p>
             </div>
           </div>
 
           <div className="rounded-2xl border border-white/30 bg-white/15 px-5 py-3 text-sm font-bold">
-            VERIFIED
+            {t('card.verified')}
           </div>
         </div>
       </div>
@@ -123,13 +129,13 @@ function CardFront({
               />
             ) : (
               <div className="flex h-48 w-48 items-center justify-center rounded-3xl bg-slate-100 text-sm text-slate-500">
-                No photo
+                {t('common.noPhoto')}
               </div>
             )}
 
             <div className="rounded-2xl bg-slate-950 p-3 text-center">
               <p className="text-xs font-bold uppercase tracking-wide text-white/70">
-                Member No
+                {t('card.memberNo')}
               </p>
               <p className="mt-1 text-sm font-black text-white">
                 {member.member_no}
@@ -140,7 +146,7 @@ function CardFront({
           <div className="space-y-5">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                Member Name
+                {t('card.memberName')}
               </p>
               <h3 className="mt-1 text-3xl font-black text-slate-950">
                 {member.full_name}
@@ -148,17 +154,23 @@ function CardFront({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <Info label="Father Name" value={member.father_name} />
-              <Info label="CNIC" value={member.cnic} />
-              <Info label="Mobile" value={member.mobile} />
-              <Info label="District" value={member.district} />
-              <Info label="Taluka / Town" value={member.taluka} />
-              <Info label="Blood Group" value={member.blood_group} />
-              <Info label="Profession" value={member.profession} />
-              <Info label="Designation" value={member.designation} />
-              <Info label="Wing / Category" value={member.caste_branch} />
-              <Info label="Approved Date" value={formatDate(member.approved_at)} />
-              <Info label="Status" value="Approved" />
+              <Info label={t('card.fatherName')} value={member.father_name} />
+              <Info label={t('dashboard.cnic')} value={member.cnic} />
+              <Info label={t('card.mobile')} value={member.mobile} />
+              <Info label={t('dashboard.district')} value={member.district} />
+              <Info label={t('card.talukaTown')} value={member.taluka} />
+              <Info label={t('dashboard.bloodGroup')} value={member.blood_group} />
+              <Info label={t('dashboard.profession')} value={member.profession} />
+              <Info label={t('dashboard.designation')} value={member.designation} />
+              <Info label={t('card.wingCategory')} value={member.caste_branch} />
+              <Info
+                label={t('card.approvedDate')}
+                value={formatDate(member.approved_at, language)}
+              />
+              <Info
+                label={t('admin.table.status')}
+                value={t('common.status.approved')}
+              />
             </div>
           </div>
 
@@ -166,7 +178,7 @@ function CardFront({
             {qrUrl ? (
               <img
                 src={qrUrl}
-                alt="Verification QR"
+                alt={t('card.front.qrAlt')}
                 className="h-40 w-40 rounded-xl bg-white p-2"
               />
             ) : (
@@ -174,7 +186,7 @@ function CardFront({
             )}
 
             <p className="mt-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Scan to verify
+              {t('card.scanToVerify')}
             </p>
           </div>
         </div>
@@ -194,8 +206,13 @@ function CardBack({
   qrUrl: string | null
   verifyUrl: string
 }) {
+  const { t, direction, language } = useI18n()
+
   return (
-    <section className="overflow-hidden rounded-[1.65rem] border border-slate-900/10 bg-white">
+    <section
+      className="overflow-hidden rounded-[1.65rem] border border-slate-900/10 bg-white"
+      dir={direction}
+    >
       <div className="relative overflow-hidden bg-slate-950 p-7 text-white">
         <div className="absolute inset-y-0 left-0 w-1/3 bg-red-700" />
         <div className="absolute inset-y-0 left-1/3 w-1/3 bg-black" />
@@ -205,14 +222,13 @@ function CardBack({
         <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-start">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/80">
-              Official Verification Side
+              {t('card.back.sideLabel')}
             </p>
             <h2 className="mt-2 text-3xl font-black tracking-tight">
-              {APP_SHORT_NAME} Membership Verification
+              {t('card.back.title')}
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-white/85">
-              This card remains valid only when the QR verification page shows
-              approved membership status.
+              {t('card.back.validity')}
             </p>
           </div>
 
@@ -233,45 +249,39 @@ function CardBack({
           <div className="space-y-5">
             <div className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm">
               <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-950">
-                Member Information
+                {t('card.back.memberInfo')}
               </h3>
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <Info label="Name" value={member.full_name} />
-                <Info label="Father Name" value={member.father_name} />
-                <Info label="Member No" value={member.member_no} />
-                <Info label="CNIC" value={member.cnic} />
-                <Info label="Mobile" value={member.mobile} />
-                <Info label="District" value={member.district} />
-                <Info label="Taluka / Town" value={member.taluka} />
-                <Info label="Address" value={member.address} />
-                <Info label="Date of Birth" value={formatDate(member.date_of_birth)} />
-                <Info label="Blood Group" value={member.blood_group} />
-                <Info label="Profession" value={member.profession} />
-                <Info label="Designation" value={member.designation} />
-                <Info label="Wing / Category" value={member.caste_branch} />
+                <Info label={t('dashboard.fullName')} value={member.full_name} />
+                <Info label={t('card.fatherName')} value={member.father_name} />
+                <Info label={t('card.memberNo')} value={member.member_no} />
+                <Info label={t('dashboard.cnic')} value={member.cnic} />
+                <Info label={t('card.mobile')} value={member.mobile} />
+                <Info label={t('dashboard.district')} value={member.district} />
+                <Info label={t('card.talukaTown')} value={member.taluka} />
+                <Info label={t('dashboard.address')} value={member.address} />
+                <Info
+                  label={t('dashboard.dateOfBirth')}
+                  value={formatDate(member.date_of_birth, language)}
+                />
+                <Info label={t('dashboard.bloodGroup')} value={member.blood_group} />
+                <Info label={t('dashboard.profession')} value={member.profession} />
+                <Info label={t('dashboard.designation')} value={member.designation} />
+                <Info label={t('card.wingCategory')} value={member.caste_branch} />
               </div>
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-950">
-                Terms & Conditions
+                {t('card.back.terms')}
               </h3>
 
               <ol className="mt-4 space-y-2 text-sm leading-6 text-slate-700">
-                <li>1. This digital card is property of {APP_NAME}.</li>
-                <li>
-                  2. Misuse, alteration, or unauthorized duplication is not
-                  allowed.
-                </li>
-                <li>
-                  3. Verification must be confirmed through the official QR
-                  code or verification URL.
-                </li>
-                <li>
-                  4. Membership status may be updated by the authorized admin
-                  office.
-                </li>
+                <li>{t('card.back.term1')}</li>
+                <li>{t('card.back.term2')}</li>
+                <li>{t('card.back.term3')}</li>
+                <li>{t('card.back.term4')}</li>
               </ol>
             </div>
           </div>
@@ -281,7 +291,7 @@ function CardBack({
               {qrUrl ? (
                 <img
                   src={qrUrl}
-                  alt="Verification QR"
+                  alt={t('card.front.qrAlt')}
                   className="mx-auto h-44 w-44 rounded-xl bg-white p-2"
                 />
               ) : (
@@ -289,36 +299,34 @@ function CardBack({
               )}
 
               <p className="mt-3 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
-                Scan to Verify
+                {t('card.scanToVerifyTitle')}
               </p>
               <p className="mt-2 break-all text-xs leading-5 text-slate-600">
-                {verifyUrl || 'Verification URL not available'}
+                {verifyUrl || t('card.back.verifyUrlUnavailable')}
               </p>
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-slate-950 p-5 text-white shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">
-                Issuing Authority
+                {t('card.back.issuingAuthority')}
               </p>
               <p className="mt-2 text-lg font-black">{APP_NAME}</p>
               <p className="mt-1 text-sm text-white/70">
-                Digital Membership Office
+                {t('card.back.digitalOffice')}
               </p>
 
               <div className="mt-8 border-t border-white/30 pt-3">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">
-                  Authorized Signature
+                  {t('card.back.authorizedSignature')}
                 </p>
                 <p className="mt-2 text-sm font-semibold text-white">
-                  Issued Electronically
+                  {t('card.back.issuedElectronically')}
                 </p>
               </div>
             </div>
 
             <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-900">
-              Official Notice: If found, please verify the QR code and contact
-              the issuing organization before using this card for any official
-              purpose.
+              {t('card.back.officialNotice')}
             </div>
           </div>
         </div>
@@ -354,22 +362,25 @@ function Info({
   label: string
   value: string | null | undefined
 }) {
+  const { t } = useI18n()
+
   return (
     <div>
       <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
         {label}
       </p>
       <p className="mt-1 break-words text-sm font-bold text-slate-950">
-        {value || 'Not provided'}
+        {value || t('common.notProvided')}
       </p>
     </div>
   )
 }
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return 'N/A'
+function formatDate(value: string | null | undefined, language: string) {
+  if (!value) return null
 
-  return new Date(value).toLocaleDateString()
+  const locale = language === 'ur' ? 'ur-PK' : language === 'sd' ? 'sd-PK' : 'en-PK'
+  return new Date(value).toLocaleDateString(locale)
 }
 
 export async function imageUrlToDataUrl(url: string) {

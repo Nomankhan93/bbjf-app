@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { approveMemberAction, rejectMemberAction } from '../../../lib/admin/actions'
+import { useI18n, type TranslationKey } from '../../../lib/i18n'
 import { supabase } from '../../../lib/supabase/client'
 
 export const Route = createFileRoute('/admin/members/$id')({
@@ -34,9 +35,16 @@ type Member = {
   created_at: string
 }
 
+const statusLabelKeys: Record<Member['status'], TranslationKey> = {
+  pending: 'common.status.pending',
+  approved: 'common.status.approved',
+  rejected: 'common.status.rejected',
+}
+
 function AdminMemberDetailPage() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
+  const { t, direction, language } = useI18n()
 
   const [member, setMember] = useState<Member | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
@@ -122,7 +130,7 @@ function AdminMemberDetailPage() {
 
       await loadMember()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to approve member.')
+      setError(err instanceof Error ? err.message : t('admin.detail.approveError'))
     }
 
     setActionLoading(false)
@@ -148,7 +156,7 @@ function AdminMemberDetailPage() {
       setRejectionReason('')
       await loadMember()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reject member.')
+      setError(err instanceof Error ? err.message : t('admin.detail.rejectError'))
     }
 
     setActionLoading(false)
@@ -156,9 +164,9 @@ function AdminMemberDetailPage() {
 
   if (loading) {
     return (
-      <main className="px-4 py-10">
+      <main className="px-4 py-10" dir={direction}>
         <div className="page-wrap rounded-2xl bg-white p-6 shadow-sm">
-          Loading member...
+          {t('admin.detail.loading')}
         </div>
       </main>
     )
@@ -166,23 +174,23 @@ function AdminMemberDetailPage() {
 
   if (!member) {
     return (
-      <main className="px-4 py-10">
+      <main className="px-4 py-10" dir={direction}>
         <div className="page-wrap rounded-2xl bg-white p-6 shadow-sm">
-          Member not found.
+          {t('common.memberNotFound')}
         </div>
       </main>
     )
   }
 
   return (
-    <main className="px-4 py-10">
+    <main className="px-4 py-10" dir={direction}>
       <div className="page-wrap space-y-6">
         <header className="rounded-2xl bg-white p-6 shadow-sm">
           <Link
             to="/admin"
             className="text-sm font-medium text-emerald-700 no-underline"
           >
-            ← Back to Admin
+            {t('common.backToAdmin')}
           </Link>
 
           <div className="mt-4 flex flex-col justify-between gap-4 md:flex-row md:items-start">
@@ -191,7 +199,7 @@ function AdminMemberDetailPage() {
                 {member.full_name}
               </h1>
               <p className="mt-1 text-sm text-slate-600">
-                CNIC: {member.cnic} · {member.district}
+                {t('dashboard.cnic')}: {member.cnic} · {member.district}
                 {member.taluka ? ` · ${member.taluka}` : ''}
               </p>
             </div>
@@ -205,7 +213,7 @@ function AdminMemberDetailPage() {
                   params={{ id: member.id }}
                   className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white no-underline hover:bg-black"
                 >
-                  Open Card
+                  {t('admin.detail.openCard')}
                 </Link>
               ) : null}
             </div>
@@ -228,56 +236,52 @@ function AdminMemberDetailPage() {
               />
             ) : (
               <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
-                No photo
+                {t('common.noPhoto')}
               </div>
             )}
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow-sm md:col-span-2">
             <h2 className="text-lg font-semibold text-slate-900">
-              Member Details
+              {t('admin.detail.memberDetails')}
             </h2>
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <InfoItem label="Full Name" value={member.full_name} />
-              <InfoItem label="Father Name" value={member.father_name} />
-              <InfoItem label="CNIC" value={member.cnic} />
-              <InfoItem label="Mobile" value={member.mobile} />
-              <InfoItem label="District" value={member.district} />
-              <InfoItem label="Taluka / Town" value={member.taluka} />
-              <InfoItem label="Date of Birth" value={formatDate(member.date_of_birth)} />
-              <InfoItem label="Gender" value={member.gender} />
-              <InfoItem label="Education" value={member.education} />
-              <InfoItem label="Blood Group" value={member.blood_group} />
-              <InfoItem label="Profession" value={member.profession} />
-              <InfoItem label="Designation" value={member.designation} />
-              <InfoItem label="Caste Branch" value={member.caste_branch} />
+              <InfoItem label={t('dashboard.fullName')} value={member.full_name} />
+              <InfoItem label={t('dashboard.fatherName')} value={member.father_name} />
+              <InfoItem label={t('dashboard.cnic')} value={member.cnic} />
+              <InfoItem label={t('dashboard.mobile')} value={member.mobile} />
+              <InfoItem label={t('dashboard.district')} value={member.district} />
+              <InfoItem label={t('dashboard.taluka')} value={member.taluka} />
+              <InfoItem label={t('dashboard.dateOfBirth')} value={formatDate(member.date_of_birth, language)} />
+              <InfoItem label={t('dashboard.gender')} value={member.gender} />
+              <InfoItem label={t('dashboard.education')} value={member.education} />
+              <InfoItem label={t('dashboard.bloodGroup')} value={member.blood_group} />
+              <InfoItem label={t('dashboard.profession')} value={member.profession} />
+              <InfoItem label={t('dashboard.designation')} value={member.designation} />
+              <InfoItem label={t('dashboard.casteBranch')} value={member.caste_branch} />
               <InfoItem
-                label="Declaration"
-                value={member.declaration_accepted ? 'Accepted' : 'Not accepted'}
+                label={t('dashboard.declaration')}
+                value={member.declaration_accepted ? t('common.accepted') : t('common.notAccepted')}
               />
-              <InfoItem label="Member No" value={member.member_no} />
+              <InfoItem label={t('dashboard.memberNo')} value={member.member_no} />
               <InfoItem
-                label="Submitted"
-                value={new Date(member.created_at).toLocaleString()}
+                label={t('admin.detail.submitted')}
+                value={formatDateTime(member.created_at, language)}
               />
               <InfoItem
-                label="Approved At"
-                value={
-                  member.approved_at
-                    ? new Date(member.approved_at).toLocaleString()
-                    : null
-                }
+                label={t('admin.detail.approvedAt')}
+                value={formatDateTime(member.approved_at, language)}
               />
             </div>
 
             <div className="mt-6 rounded-xl bg-slate-50 p-4">
-              <InfoItem label="Address" value={member.address} />
+              <InfoItem label={t('dashboard.address')} value={member.address} />
             </div>
 
             {member.rejection_reason ? (
               <div className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-800">
-                <p className="font-medium">Rejection Reason</p>
+                <p className="font-medium">{t('admin.detail.rejectionReason')}</p>
                 <p className="mt-1">{member.rejection_reason}</p>
               </div>
             ) : null}
@@ -287,7 +291,7 @@ function AdminMemberDetailPage() {
         {member.status === 'pending' ? (
           <section className="rounded-2xl bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">
-              Review Application
+              {t('admin.detail.reviewApplication')}
             </h2>
 
             <div className="mt-5 flex flex-wrap gap-3">
@@ -297,20 +301,20 @@ function AdminMemberDetailPage() {
                 disabled={actionLoading}
                 className="rounded-lg bg-emerald-700 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-60"
               >
-                {actionLoading ? 'Processing...' : 'Approve Member'}
+                {actionLoading ? t('admin.detail.processing') : t('admin.detail.approveMember')}
               </button>
             </div>
 
             <div className="mt-6 max-w-xl">
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-slate-700">
-                  Rejection Reason
+                  {t('admin.detail.rejectionReason')}
                 </span>
                 <textarea
                   value={rejectionReason}
                   onChange={(event) => setRejectionReason(event.target.value)}
                   className="input min-h-28"
-                  placeholder="Write reason before rejecting..."
+                  placeholder={t('admin.detail.rejectPlaceholder')}
                 />
               </label>
 
@@ -320,7 +324,7 @@ function AdminMemberDetailPage() {
                 disabled={actionLoading || rejectionReason.trim().length < 3}
                 className="mt-3 rounded-lg bg-red-700 px-5 py-2 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-60"
               >
-                Reject Member
+                {t('admin.detail.rejectMember')}
               </button>
             </div>
           </section>
@@ -337,13 +341,15 @@ function InfoItem({
   label: string
   value: string | null | undefined
 }) {
+  const { t } = useI18n()
+
   return (
     <div>
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
         {label}
       </p>
       <p className="mt-1 text-sm font-medium text-slate-900">
-        {value || 'Not provided'}
+        {value || t('common.notProvided')}
       </p>
     </div>
   )
@@ -354,6 +360,7 @@ function StatusBadge({
 }: {
   status: 'pending' | 'approved' | 'rejected'
 }) {
+  const { t } = useI18n()
   const styles = {
     pending: 'bg-amber-50 text-amber-700 ring-amber-200',
     approved: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
@@ -362,14 +369,23 @@ function StatusBadge({
 
   return (
     <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ring-1 ${styles[status]}`}
+      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${styles[status]}`}
     >
-      {status}
+      {t(statusLabelKeys[status])}
     </span>
   )
 }
 
-function formatDate(value: string | null | undefined) {
+function getLocale(language: string) {
+  return language === 'ur' ? 'ur-PK' : language === 'sd' ? 'sd-PK' : 'en-PK'
+}
+
+function formatDate(value: string | null | undefined, language: string) {
   if (!value) return null
-  return new Date(value).toLocaleDateString()
+  return new Date(value).toLocaleDateString(getLocale(language))
+}
+
+function formatDateTime(value: string | null | undefined, language: string) {
+  if (!value) return null
+  return new Date(value).toLocaleString(getLocale(language))
 }

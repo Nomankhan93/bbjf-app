@@ -9,6 +9,7 @@ import {
   type MembershipCardMember,
   imageUrlToDataUrl,
 } from '../../../../components/MembershipCard'
+import { useI18n, type TranslationKey } from '../../../../lib/i18n'
 import { supabase } from '../../../../lib/supabase/client'
 
 export const Route = createFileRoute('/admin/members/$id/card')({
@@ -22,9 +23,16 @@ type Member = MembershipCardMember & {
   created_at: string
 }
 
+const statusLabelKeys: Record<Member['status'], TranslationKey> = {
+  pending: 'common.status.pending',
+  approved: 'common.status.approved',
+  rejected: 'common.status.rejected',
+}
+
 function AdminMemberCardPage() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
+  const { t, direction } = useI18n()
   const cardRef = useRef<HTMLDivElement>(null)
 
   const [loading, setLoading] = useState(true)
@@ -85,7 +93,7 @@ function AdminMemberCardPage() {
     setMember(data)
 
     if (data.status !== 'approved' || !data.member_no) {
-      setError('Card preview is available only after approval and member number generation.')
+      setError(t('admin.card.onlyApproved'))
       setLoading(false)
       return
     }
@@ -129,11 +137,7 @@ function AdminMemberCardPage() {
       link.href = dataUrl
       link.click()
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to download card. Please try again.',
-      )
+      setError(err instanceof Error ? err.message : t('card.downloadError'))
     } finally {
       setDownloading(false)
     }
@@ -141,9 +145,9 @@ function AdminMemberCardPage() {
 
   if (loading) {
     return (
-      <main className="px-4 py-10">
+      <main className="px-4 py-10" dir={direction}>
         <div className="page-wrap rounded-2xl bg-white p-6 shadow-sm">
-          Loading member card...
+          {t('admin.card.loading')}
         </div>
       </main>
     )
@@ -151,43 +155,43 @@ function AdminMemberCardPage() {
 
   if (!member) {
     return (
-      <main className="px-4 py-10">
+      <main className="px-4 py-10" dir={direction}>
         <div className="page-wrap rounded-2xl bg-white p-6 shadow-sm">
-          Member not found.
+          {t('common.memberNotFound')}
         </div>
       </main>
     )
   }
 
   return (
-    <main className="px-4 py-10">
+    <main className="px-4 py-10" dir={direction}>
       <div className="page-wrap space-y-6">
         <header className="rounded-2xl bg-white p-6 shadow-sm">
           <div className="flex flex-wrap gap-3 text-sm font-medium">
             <Link to="/admin" className="text-emerald-700 no-underline">
-              ← Back to Admin
+              {t('common.backToAdmin')}
             </Link>
             <Link
               to="/admin/members/$id"
               params={{ id: member.id }}
               className="text-emerald-700 no-underline"
             >
-              Back to Member Detail
+              {t('common.backToMemberDetail')}
             </Link>
           </div>
 
           <div className="mt-4 flex flex-col justify-between gap-4 md:flex-row md:items-start">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
-                Admin Card Preview
+                {t('admin.card.title')}
               </h1>
               <p className="mt-1 text-sm text-slate-600">
-                {member.full_name} · {member.member_no || 'No member number'}
+                {member.full_name} · {member.member_no || t('dashboard.notIssuedYet')}
               </p>
             </div>
 
             <span className="inline-flex w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">
-              {member.status}
+              {t(statusLabelKeys[member.status])}
             </span>
           </div>
         </header>
@@ -218,7 +222,7 @@ function AdminMemberCardPage() {
                 disabled={downloading}
                 className="rounded-lg bg-slate-950 px-5 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-60"
               >
-                {downloading ? 'Downloading...' : 'Download Front + Back PNG'}
+                {downloading ? t('common.downloading') : t('common.downloadFrontBackPng')}
               </button>
 
               <Link
@@ -226,7 +230,7 @@ function AdminMemberCardPage() {
                 params={{ memberNo: member.member_no }}
                 className="rounded-lg border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 no-underline hover:bg-slate-50"
               >
-                Open Verification Page
+                {t('common.openVerificationPage')}
               </Link>
             </div>
           </>

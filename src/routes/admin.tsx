@@ -6,6 +6,7 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
+import { useI18n, type TranslationKey } from '../lib/i18n'
 import { supabase } from '../lib/supabase/client'
 
 export const Route = createFileRoute('/admin')({
@@ -26,8 +27,15 @@ type Member = {
   created_at: string
 }
 
+const statusLabelKeys: Record<Member['status'], TranslationKey> = {
+  pending: 'common.status.pending',
+  approved: 'common.status.approved',
+  rejected: 'common.status.rejected',
+}
+
 function AdminPage() {
   const navigate = useNavigate()
+  const { t, direction, language } = useI18n()
 
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
@@ -135,26 +143,26 @@ function AdminPage() {
 
   if (loading) {
     return (
-      <main className="px-4 py-10">
+      <main className="px-4 py-10" dir={direction}>
         <div className="page-wrap rounded-2xl bg-white p-6 shadow-sm">
-          Loading admin panel...
+          {t('admin.loading')}
         </div>
       </main>
     )
   }
 
   return (
-    <main className="px-4 py-10">
+    <main className="px-4 py-10" dir={direction}>
       <div className="page-wrap space-y-6">
         <header className="rounded-2xl bg-white p-6 shadow-sm">
           <p className="text-sm font-medium text-emerald-700">
-            Bilawal Bhutto Jayala Federation
+            {t('brand.name')}
           </p>
           <h1 className="mt-1 text-2xl font-bold text-slate-900">
-            Admin Panel
+            {t('admin.title')}
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Review membership applications and manage member approval.
+            {t('admin.description')}
           </p>
         </header>
 
@@ -170,7 +178,7 @@ function AdminPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="input md:max-w-md"
-              placeholder="Search name, CNIC, mobile, district, taluka, designation, member no..."
+              placeholder={t('admin.searchPlaceholder')}
             />
 
             <select
@@ -178,10 +186,10 @@ function AdminPage() {
               onChange={(event) => setStatusFilter(event.target.value)}
               className="input md:max-w-xs"
             >
-              <option value="all">All statuses</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              <option value="all">{t('admin.allStatuses')}</option>
+              <option value="pending">{t('common.status.pending')}</option>
+              <option value="approved">{t('common.status.approved')}</option>
+              <option value="rejected">{t('common.status.rejected')}</option>
             </select>
           </div>
 
@@ -189,16 +197,16 @@ function AdminPage() {
             <table className="w-full min-w-[1080px] text-left text-sm">
               <thead>
                 <tr className="border-b text-xs uppercase tracking-wide text-slate-500">
-                  <th className="py-3">Photo</th>
-                  <th className="py-3">Name</th>
-                  <th className="py-3">Designation</th>
-                  <th className="py-3">CNIC</th>
-                  <th className="py-3">Contact</th>
-                  <th className="py-3">Area</th>
-                  <th className="py-3">Status</th>
-                  <th className="py-3">Member No</th>
-                  <th className="py-3">Submitted</th>
-                  <th className="py-3">Action</th>
+                  <th className="py-3">{t('admin.table.photo')}</th>
+                  <th className="py-3">{t('admin.table.name')}</th>
+                  <th className="py-3">{t('admin.table.designation')}</th>
+                  <th className="py-3">{t('admin.table.cnic')}</th>
+                  <th className="py-3">{t('admin.table.contact')}</th>
+                  <th className="py-3">{t('admin.table.area')}</th>
+                  <th className="py-3">{t('admin.table.status')}</th>
+                  <th className="py-3">{t('admin.table.memberNo')}</th>
+                  <th className="py-3">{t('admin.table.submitted')}</th>
+                  <th className="py-3">{t('admin.table.action')}</th>
                 </tr>
               </thead>
 
@@ -222,7 +230,7 @@ function AdminPage() {
                     </td>
 
                     <td className="py-3 text-slate-700">
-                      {member.designation || '—'}
+                      {member.designation || t('common.notProvided')}
                     </td>
 
                     <td className="py-3 text-slate-700">{member.cnic}</td>
@@ -232,7 +240,7 @@ function AdminPage() {
                     <td className="py-3 text-slate-700">
                       <p>{member.district}</p>
                       <p className="text-xs text-slate-500">
-                        {member.taluka || 'Taluka not provided'}
+                        {member.taluka || t('admin.talukaNotProvided')}
                       </p>
                     </td>
 
@@ -245,7 +253,7 @@ function AdminPage() {
                     </td>
 
                     <td className="py-3 text-slate-700">
-                      {new Date(member.created_at).toLocaleDateString()}
+                      {formatDate(member.created_at, language)}
                     </td>
 
                     <td className="py-3">
@@ -254,7 +262,7 @@ function AdminPage() {
                         params={{ id: member.id }}
                         className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium text-white no-underline hover:bg-slate-800"
                       >
-                        View
+                        {t('admin.view')}
                       </Link>
                     </td>
                   </tr>
@@ -263,7 +271,7 @@ function AdminPage() {
                 {filteredMembers.length === 0 ? (
                   <tr>
                     <td colSpan={10} className="py-8 text-center text-slate-500">
-                      No members found.
+                      {t('admin.noMembersFound')}
                     </td>
                   </tr>
                 ) : null}
@@ -281,6 +289,7 @@ function StatusBadge({
 }: {
   status: 'pending' | 'approved' | 'rejected'
 }) {
+  const { t } = useI18n()
   const styles = {
     pending: 'bg-amber-50 text-amber-700 ring-amber-200',
     approved: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
@@ -289,9 +298,14 @@ function StatusBadge({
 
   return (
     <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ring-1 ${styles[status]}`}
+      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${styles[status]}`}
     >
-      {status}
+      {t(statusLabelKeys[status])}
     </span>
   )
+}
+
+function formatDate(value: string, language: string) {
+  const locale = language === 'ur' ? 'ur-PK' : language === 'sd' ? 'sd-PK' : 'en-PK'
+  return new Date(value).toLocaleDateString(locale)
 }

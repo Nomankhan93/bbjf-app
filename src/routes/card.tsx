@@ -9,6 +9,7 @@ import {
   type MembershipCardMember,
   imageUrlToDataUrl,
 } from '../components/MembershipCard'
+import { useI18n } from '../lib/i18n'
 import { supabase } from '../lib/supabase/client'
 
 export const Route = createFileRoute('/card')({
@@ -19,6 +20,7 @@ type Member = MembershipCardMember
 
 function CardPage() {
   const navigate = useNavigate()
+  const { t, direction } = useI18n()
   const cardRef = useRef<HTMLDivElement>(null)
 
   const [loading, setLoading] = useState(true)
@@ -65,7 +67,7 @@ function CardPage() {
     }
 
     if (!data) {
-      setError('Membership form not found.')
+      setError(t('card.formNotFound'))
       setLoading(false)
       return
     }
@@ -73,7 +75,7 @@ function CardPage() {
     setMember(data)
 
     if (data.status !== 'approved' || !data.member_no) {
-      setError('Your membership is not approved yet.')
+      setError(t('card.notApproved'))
       setLoading(false)
       return
     }
@@ -117,11 +119,7 @@ function CardPage() {
       link.href = dataUrl
       link.click()
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to download card. Please try again.',
-      )
+      setError(err instanceof Error ? err.message : t('card.downloadError'))
     } finally {
       setDownloading(false)
     }
@@ -129,31 +127,30 @@ function CardPage() {
 
   if (loading) {
     return (
-      <main className="px-4 py-10">
+      <main className="px-4 py-10" dir={direction}>
         <div className="page-wrap rounded-2xl bg-white p-6 shadow-sm">
-          Loading digital card...
+          {t('card.loading')}
         </div>
       </main>
     )
   }
 
   return (
-    <main className="px-4 py-10">
+    <main className="px-4 py-10" dir={direction}>
       <div className="page-wrap space-y-6">
         <header className="rounded-2xl bg-white p-6 shadow-sm">
           <Link
             to="/dashboard"
             className="text-sm font-medium text-emerald-700 no-underline"
           >
-            ← Back to Dashboard
+            {t('common.backToDashboard')}
           </Link>
 
           <h1 className="mt-4 text-2xl font-bold text-slate-900">
-            Digital Membership Card
+            {t('card.title')}
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Download your official {APP_SHORT_NAME} digital ID card with front,
-            back and QR verification.
+            {t('card.description')}
           </p>
         </header>
 
@@ -183,7 +180,7 @@ function CardPage() {
                 disabled={downloading}
                 className="rounded-lg bg-slate-950 px-5 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-60"
               >
-                {downloading ? 'Downloading...' : 'Download Front + Back PNG'}
+                {downloading ? t('common.downloading') : t('common.downloadFrontBackPng')}
               </button>
 
               <Link
@@ -191,15 +188,13 @@ function CardPage() {
                 params={{ memberNo: member.member_no }}
                 className="rounded-lg border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 no-underline hover:bg-slate-50"
               >
-                Open Verification Page
+                {t('common.openVerificationPage')}
               </Link>
             </div>
           </>
         ) : (
           <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-slate-700">
-              Your digital card will be available after admin approval.
-            </p>
+            <p className="text-slate-700">{t('card.availableAfterApproval')}</p>
           </div>
         )}
       </div>

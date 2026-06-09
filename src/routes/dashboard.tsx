@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { useI18n } from '../lib/i18n'
 import { supabase } from '../lib/supabase/client'
 
 export const Route = createFileRoute('/dashboard')({
@@ -35,6 +36,7 @@ type Member = {
 
 function DashboardPage() {
   const navigate = useNavigate()
+  const { t, direction, language } = useI18n()
   const [loading, setLoading] = useState(true)
   const [member, setMember] = useState<Member | null>(null)
   const [photoSignedUrl, setPhotoSignedUrl] = useState<string | null>(null)
@@ -90,27 +92,27 @@ function DashboardPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50 px-4 py-10">
+      <main className="min-h-screen bg-slate-50 px-4 py-10" dir={direction}>
         <div className="mx-auto max-w-5xl rounded-2xl bg-white p-6 shadow-sm">
-          <p className="text-slate-600">Loading dashboard...</p>
+          <p className="text-slate-600">{t('dashboard.loading')}</p>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10">
+    <main className="min-h-screen bg-slate-50 px-4 py-10" dir={direction}>
       <div className="mx-auto max-w-5xl space-y-6">
         <header className="flex flex-col justify-between gap-4 rounded-2xl bg-white p-6 shadow-sm md:flex-row md:items-center">
           <div>
             <p className="text-sm font-medium text-emerald-700">
-              Bilawal Bhutto Jayala Federation
+              {t('brand.name')}
             </p>
             <h1 className="mt-1 text-2xl font-bold text-slate-900">
-              Member Dashboard
+              {t('dashboard.title')}
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              Track your membership application and digital ID card.
+              {t('dashboard.description')}
             </p>
           </div>
 
@@ -119,7 +121,7 @@ function DashboardPage() {
             onClick={handleLogout}
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
           >
-            Logout
+            {t('auth.logout')}
           </button>
         </header>
 
@@ -132,141 +134,137 @@ function DashboardPage() {
         {!member ? (
           <section className="rounded-2xl bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-900">
-              Complete your membership registration
+              {t('dashboard.completeRegistrationTitle')}
             </h2>
             <p className="mt-2 text-sm text-slate-600">
-              Your account is created, but your BBJF membership form has not been
-              submitted yet.
+              {t('dashboard.completeRegistrationDescription')}
             </p>
 
             <Link
               to="/register"
               className="mt-5 inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
             >
-              Fill Membership Form
+              {t('dashboard.fillMembershipForm')}
             </Link>
           </section>
         ) : (
-          <>
-            <section className="grid gap-6 md:grid-cols-3">
-              <div className="rounded-2xl bg-white p-6 shadow-sm md:col-span-2">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-900">
-                      Membership Profile
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Your submitted membership information.
-                    </p>
-                  </div>
-
-                  <StatusBadge status={member.status} />
+          <section className="grid gap-6 md:grid-cols-3">
+            <div className="rounded-2xl bg-white p-6 shadow-sm md:col-span-2">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    {t('dashboard.memberProfile')}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {t('dashboard.submittedInfo')}
+                  </p>
                 </div>
 
-                <div className="mt-6 flex flex-col gap-6 md:flex-row">
-                  <div className="shrink-0">
-                    {photoSignedUrl ? (
-                      <img
-                        src={photoSignedUrl}
-                        alt={member.full_name}
-                        className="h-32 w-32 rounded-2xl object-cover ring-1 ring-slate-200"
-                      />
-                    ) : (
-                      <div className="flex h-32 w-32 items-center justify-center rounded-2xl bg-slate-100 text-sm text-slate-500">
-                        No photo
-                      </div>
-                    )}
-                  </div>
+                <StatusBadge status={member.status} />
+              </div>
 
-                  <div className="grid flex-1 gap-4 sm:grid-cols-2">
-                    <InfoItem label="Full Name" value={member.full_name} />
-                    <InfoItem label="Father Name" value={member.father_name} />
-                    <InfoItem label="CNIC" value={member.cnic} />
-                    <InfoItem label="Mobile" value={member.mobile} />
-                    <InfoItem label="District" value={member.district} />
-                    <InfoItem label="Taluka / Town" value={member.taluka} />
-                    <InfoItem label="Date of Birth" value={formatDate(member.date_of_birth)} />
-                    <InfoItem label="Gender" value={member.gender} />
-                    <InfoItem label="Education" value={member.education} />
-                    <InfoItem label="Blood Group" value={member.blood_group} />
-                    <InfoItem label="Profession" value={member.profession} />
-                    <InfoItem label="Designation" value={member.designation} />
-                    <InfoItem label="Caste Branch" value={member.caste_branch} />
-                    <InfoItem
-                      label="Declaration"
-                      value={member.declaration_accepted ? 'Accepted' : 'Not accepted'}
+              <div className="mt-6 flex flex-col gap-6 md:flex-row">
+                <div className="shrink-0">
+                  {photoSignedUrl ? (
+                    <img
+                      src={photoSignedUrl}
+                      alt={member.full_name}
+                      className="h-32 w-32 rounded-2xl object-cover ring-1 ring-slate-200"
                     />
-                    <InfoItem
-                      label="Member No"
-                      value={member.member_no ?? 'Not issued yet'}
-                    />
-                  </div>
+                  ) : (
+                    <div className="flex h-32 w-32 items-center justify-center rounded-2xl bg-slate-100 text-sm text-slate-500">
+                      {t('dashboard.noPhoto')}
+                    </div>
+                  )}
                 </div>
 
-                <div className="mt-6 rounded-xl bg-slate-50 p-4">
-                  <InfoItem label="Address" value={member.address} />
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  {member.status === 'pending' ? (
-                    <Link
-                      to="/register"
-                      className="rounded-lg border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
-                    >
-                      Edit Pending Form
-                    </Link>
-                  ) : null}
-
-                  {member.status === 'approved' ? (
-                    <Link
-                      to="/card"
-                      className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-                    >
-                      View Digital Card
-                    </Link>
-                  ) : null}
+                <div className="grid flex-1 gap-4 sm:grid-cols-2">
+                  <InfoItem label={t('dashboard.fullName')} value={member.full_name} />
+                  <InfoItem label={t('dashboard.fatherName')} value={member.father_name} />
+                  <InfoItem label={t('dashboard.cnic')} value={member.cnic} />
+                  <InfoItem label={t('dashboard.mobile')} value={member.mobile} />
+                  <InfoItem label={t('dashboard.district')} value={member.district} />
+                  <InfoItem label={t('dashboard.taluka')} value={member.taluka} />
+                  <InfoItem label={t('dashboard.dateOfBirth')} value={formatDate(member.date_of_birth, language)} />
+                  <InfoItem label={t('dashboard.gender')} value={member.gender} />
+                  <InfoItem label={t('dashboard.education')} value={member.education} />
+                  <InfoItem label={t('dashboard.bloodGroup')} value={member.blood_group} />
+                  <InfoItem label={t('dashboard.profession')} value={member.profession} />
+                  <InfoItem label={t('dashboard.designation')} value={member.designation} />
+                  <InfoItem label={t('dashboard.casteBranch')} value={member.caste_branch} />
+                  <InfoItem
+                    label={t('dashboard.declaration')}
+                    value={member.declaration_accepted ? t('common.accepted') : t('common.notAccepted')}
+                  />
+                  <InfoItem
+                    label={t('dashboard.memberNo')}
+                    value={member.member_no ?? t('dashboard.notIssuedYet')}
+                  />
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-white p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Current Status
-                </h2>
+              <div className="mt-6 rounded-xl bg-slate-50 p-4">
+                <InfoItem label={t('dashboard.address')} value={member.address} />
+              </div>
 
-                <div className="mt-4">
-                  <StatusBadge status={member.status} />
-                </div>
-
+              <div className="mt-6 flex flex-wrap gap-3">
                 {member.status === 'pending' ? (
-                  <p className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
-                    Your application is under review. Admin approval is required
-                    before your digital card is issued.
-                  </p>
+                  <Link
+                    to="/register"
+                    className="rounded-lg border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+                  >
+                    {t('dashboard.editPendingForm')}
+                  </Link>
                 ) : null}
 
                 {member.status === 'approved' ? (
-                  <div className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
-                    <p className="font-medium">Verified member</p>
-                    <p className="mt-1">
-                      Approved on{' '}
-                      {member.approved_at
-                        ? new Date(member.approved_at).toLocaleDateString()
-                        : 'N/A'}
-                    </p>
-                  </div>
-                ) : null}
-
-                {member.status === 'rejected' ? (
-                  <div className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-800">
-                    <p className="font-medium">Application rejected</p>
-                    <p className="mt-1">
-                      {member.rejection_reason || 'No reason provided.'}
-                    </p>
-                  </div>
+                  <Link
+                    to="/card"
+                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                  >
+                    {t('dashboard.viewDigitalCard')}
+                  </Link>
                 ) : null}
               </div>
-            </section>
-          </>
+            </div>
+
+            <div className="rounded-2xl bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-900">
+                {t('dashboard.currentStatus')}
+              </h2>
+
+              <div className="mt-4">
+                <StatusBadge status={member.status} />
+              </div>
+
+              {member.status === 'pending' ? (
+                <p className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+                  {t('dashboard.pendingNotice')}
+                </p>
+              ) : null}
+
+              {member.status === 'approved' ? (
+                <div className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
+                  <p className="font-medium">{t('dashboard.verifiedMember')}</p>
+                  <p className="mt-1">
+                    {t('dashboard.approvedOn')}{' '}
+                    {member.approved_at
+                      ? formatDate(member.approved_at, language)
+                      : t('common.na')}
+                  </p>
+                </div>
+              ) : null}
+
+              {member.status === 'rejected' ? (
+                <div className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-800">
+                  <p className="font-medium">{t('dashboard.applicationRejected')}</p>
+                  <p className="mt-1">
+                    {member.rejection_reason || t('dashboard.noReasonProvided')}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </section>
         )}
       </div>
     </main>
@@ -280,13 +278,15 @@ function InfoItem({
   label: string
   value: string | null | undefined
 }) {
+  const { t } = useI18n()
+
   return (
     <div>
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
         {label}
       </p>
       <p className="mt-1 text-sm font-medium text-slate-900">
-        {value || 'Not provided'}
+        {value || t('common.notProvided')}
       </p>
     </div>
   )
@@ -297,6 +297,7 @@ function StatusBadge({
 }: {
   status: 'pending' | 'approved' | 'rejected'
 }) {
+  const { t } = useI18n()
   const styles = {
     pending: 'bg-amber-50 text-amber-700 ring-amber-200',
     approved: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
@@ -305,14 +306,16 @@ function StatusBadge({
 
   return (
     <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ring-1 ${styles[status]}`}
+      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${styles[status]}`}
     >
-      {status}
+      {t(`common.status.${status}`)}
     </span>
   )
 }
 
-function formatDate(value: string | null | undefined) {
+function formatDate(value: string | null | undefined, language: string) {
   if (!value) return null
-  return new Date(value).toLocaleDateString()
+
+  const locale = language === 'ur' ? 'ur-PK' : language === 'sd' ? 'sd-PK' : 'en-PK'
+  return new Date(value).toLocaleDateString(locale)
 }
