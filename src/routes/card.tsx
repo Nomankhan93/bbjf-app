@@ -53,7 +53,7 @@ function CardPage() {
     const { data, error } = await supabase
       .from('members')
       .select(
-        'id, member_no, full_name, father_name, cnic, mobile, district, taluka, address, date_of_birth, gender, education, blood_group, profession, caste_branch, photo_url, status, approved_at',
+        'id, member_no, full_name, father_name, cnic, mobile, district, taluka, address, date_of_birth, gender, education, blood_group, profession, designation, caste_branch, photo_url, status, approved_at',
       )
       .eq('user_id', user.id)
       .maybeSingle()

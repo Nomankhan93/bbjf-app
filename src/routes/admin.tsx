@@ -19,6 +19,7 @@ type Member = {
   mobile: string
   district: string
   taluka: string | null
+  designation: string | null
   photo_url: string
   status: 'pending' | 'approved' | 'rejected'
   member_no: string | null
@@ -61,6 +62,7 @@ function AdminPage() {
         member.mobile.toLowerCase().includes(query) ||
         member.district.toLowerCase().includes(query) ||
         (member.taluka ?? '').toLowerCase().includes(query) ||
+        (member.designation ?? '').toLowerCase().includes(query) ||
         (member.member_no ?? '').toLowerCase().includes(query)
 
       return matchesStatus && matchesSearch
@@ -99,7 +101,7 @@ function AdminPage() {
     const { data, error } = await supabase
       .from('members')
       .select(
-        'id, full_name, cnic, mobile, district, taluka, photo_url, status, member_no, created_at',
+        'id, full_name, cnic, mobile, district, taluka, designation, photo_url, status, member_no, created_at',
       )
       .order('created_at', { ascending: false })
 
@@ -168,7 +170,7 @@ function AdminPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="input md:max-w-md"
-              placeholder="Search name, CNIC, mobile, district, taluka, member no..."
+              placeholder="Search name, CNIC, mobile, district, taluka, designation, member no..."
             />
 
             <select
@@ -184,11 +186,12 @@ function AdminPage() {
           </div>
 
           <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[980px] text-left text-sm">
+            <table className="w-full min-w-[1080px] text-left text-sm">
               <thead>
                 <tr className="border-b text-xs uppercase tracking-wide text-slate-500">
                   <th className="py-3">Photo</th>
                   <th className="py-3">Name</th>
+                  <th className="py-3">Designation</th>
                   <th className="py-3">CNIC</th>
                   <th className="py-3">Contact</th>
                   <th className="py-3">Area</th>
@@ -216,6 +219,10 @@ function AdminPage() {
 
                     <td className="py-3 font-medium text-slate-900">
                       {member.full_name}
+                    </td>
+
+                    <td className="py-3 text-slate-700">
+                      {member.designation || '—'}
                     </td>
 
                     <td className="py-3 text-slate-700">{member.cnic}</td>
@@ -255,7 +262,7 @@ function AdminPage() {
 
                 {filteredMembers.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="py-8 text-center text-slate-500">
+                    <td colSpan={10} className="py-8 text-center text-slate-500">
                       No members found.
                     </td>
                   </tr>

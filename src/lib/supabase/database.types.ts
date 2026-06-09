@@ -59,6 +59,7 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           declaration_accepted: boolean
+          designation: string | null
           district: string
           education: string | null
           father_name: string
@@ -86,6 +87,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           declaration_accepted?: boolean
+          designation?: string | null
           district: string
           education?: string | null
           father_name: string
@@ -113,6 +115,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           declaration_accepted?: boolean
+          designation?: string | null
           district?: string
           education?: string | null
           father_name?: string
@@ -188,6 +191,7 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           declaration_accepted: boolean
+          designation: string | null
           district: string
           education: string | null
           father_name: string
@@ -227,6 +231,7 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           declaration_accepted: boolean
+          designation: string | null
           district: string
           education: string | null
           father_name: string

@@ -19,6 +19,7 @@ export type MembershipCardMember = {
   education: string | null
   blood_group: string | null
   profession: string | null
+  designation: string | null
   caste_branch: string | null
   photo_url?: string | null
   status: 'pending' | 'approved' | 'rejected'
@@ -154,6 +155,7 @@ function CardFront({
               <Info label="Taluka / Town" value={member.taluka} />
               <Info label="Blood Group" value={member.blood_group} />
               <Info label="Profession" value={member.profession} />
+              <Info label="Designation" value={member.designation} />
               <Info label="Wing / Category" value={member.caste_branch} />
               <Info label="Approved Date" value={formatDate(member.approved_at)} />
               <Info label="Status" value="Approved" />
@@ -246,6 +248,7 @@ function CardBack({
                 <Info label="Date of Birth" value={formatDate(member.date_of_birth)} />
                 <Info label="Blood Group" value={member.blood_group} />
                 <Info label="Profession" value={member.profession} />
+                <Info label="Designation" value={member.designation} />
                 <Info label="Wing / Category" value={member.caste_branch} />
               </div>
             </div>

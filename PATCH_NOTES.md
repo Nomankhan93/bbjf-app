@@ -1,24 +1,24 @@
-# BBJF Membership Profile Fields Patch
+# BBJF Register Designation Patch
 
-Scope: membership portal only.
+## Scope
+- Membership portal only.
+- Adds an optional member `designation` / role field.
+- Does not add program, finance, welfare, or organization-management modules.
 
-## What this patch adds
+## Updated files
+- `src/routes/register.tsx`
+- `src/routes/dashboard.tsx`
+- `src/routes/admin.tsx`
+- `src/routes/admin/members/$id.tsx`
+- `src/routes/card.tsx`
+- `src/routes/admin/members/$id/card.tsx`
+- `src/routes/verify/$memberNo.tsx`
+- `src/components/MembershipCard.tsx`
+- `src/lib/verify/actions.ts`
+- `src/lib/supabase/database.types.ts`
+- `supabase/migrations/20260609133500_add_member_designation.sql`
 
-- Adds membership profile columns through a Supabase migration:
-  - taluka
-  - address
-  - date_of_birth
-  - gender
-  - education
-  - blood_group
-  - declaration_accepted
-- Updates member registration form to collect these fields.
-- Updates dashboard to show the full membership profile.
-- Updates admin list and admin detail pages to show taluka/contact/profile fields.
-- Updates user and admin card preview to include taluka, address and blood group.
-- Updates public verification page to show taluka/town with district.
-- Adds the missing `.input` CSS class used by forms and admin filters.
-
-## Important
-
-Run the Supabase migration before testing the updated app, otherwise the UI will query columns that do not exist yet.
+## Notes
+- The designation field is optional so old member records continue to work.
+- Admin list search now includes designation.
+- Dashboard, admin detail, digital card, admin card preview, and public verify page show designation when available.

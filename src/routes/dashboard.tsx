@@ -22,6 +22,7 @@ type Member = {
   education: string | null
   blood_group: string | null
   profession: string | null
+  designation: string | null
   caste_branch: string | null
   declaration_accepted: boolean
   photo_url: string
@@ -189,6 +190,7 @@ function DashboardPage() {
                     <InfoItem label="Education" value={member.education} />
                     <InfoItem label="Blood Group" value={member.blood_group} />
                     <InfoItem label="Profession" value={member.profession} />
+                    <InfoItem label="Designation" value={member.designation} />
                     <InfoItem label="Caste Branch" value={member.caste_branch} />
                     <InfoItem
                       label="Declaration"

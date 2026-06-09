@@ -58,6 +58,7 @@ type ExistingMember = {
   education: string | null
   blood_group: string | null
   profession: string | null
+  designation: string | null
   caste_branch: string | null
   declaration_accepted: boolean
   photo_url: string
@@ -85,6 +86,7 @@ function RegisterPage() {
   const [education, setEducation] = useState('')
   const [bloodGroup, setBloodGroup] = useState('')
   const [profession, setProfession] = useState('')
+  const [designation, setDesignation] = useState('')
   const [casteBranch, setCasteBranch] = useState('')
   const [declarationAccepted, setDeclarationAccepted] = useState(false)
   const [photo, setPhoto] = useState<File | null>(null)
@@ -112,7 +114,7 @@ function RegisterPage() {
     const { data, error } = await supabase
       .from('members')
       .select(
-        'id, status, full_name, father_name, cnic, mobile, district, taluka, address, date_of_birth, gender, education, blood_group, profession, caste_branch, declaration_accepted, photo_url',
+        'id, status, full_name, father_name, cnic, mobile, district, taluka, address, date_of_birth, gender, education, blood_group, profession, designation, caste_branch, declaration_accepted, photo_url',
       )
       .eq('user_id', user.id)
       .maybeSingle()
@@ -137,6 +139,7 @@ function RegisterPage() {
       setEducation(data.education ?? '')
       setBloodGroup(data.blood_group ?? '')
       setProfession(data.profession ?? '')
+      setDesignation(data.designation ?? '')
       setCasteBranch(data.caste_branch ?? '')
       setDeclarationAccepted(data.declaration_accepted)
     }
@@ -223,6 +226,7 @@ function RegisterPage() {
       education: education.trim() || null,
       blood_group: bloodGroup || null,
       profession: profession.trim() || null,
+      designation: designation.trim() || null,
       caste_branch: casteBranch.trim() || null,
       declaration_accepted: declarationAccepted,
       photo_url: photoPath,
@@ -436,6 +440,16 @@ function RegisterPage() {
                 disabled={locked}
                 className="input"
                 placeholder="Optional"
+              />
+            </Field>
+
+            <Field label="Designation">
+              <input
+                value={designation}
+                onChange={(event) => setDesignation(event.target.value)}
+                disabled={locked}
+                className="input"
+                placeholder="Optional designation or role"
               />
             </Field>
 
