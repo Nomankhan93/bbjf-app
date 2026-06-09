@@ -187,7 +187,19 @@ function AdminMemberDetailPage() {
               </p>
             </div>
 
-            <StatusBadge status={member.status} />
+            <div className="flex flex-col items-start gap-3 md:items-end">
+              <StatusBadge status={member.status} />
+
+              {member.status === 'approved' && member.member_no ? (
+                <Link
+                  to="/admin/members/$id/card"
+                  params={{ id: member.id }}
+                  className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white no-underline hover:bg-black"
+                >
+                  Open Card
+                </Link>
+              ) : null}
+            </div>
           </div>
         </header>
 
