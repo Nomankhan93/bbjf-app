@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useI18n } from '../lib/i18n'
 import { supabase } from '../lib/supabase/client'
 
 export const Route = createFileRoute('/login')({
@@ -8,6 +9,7 @@ export const Route = createFileRoute('/login')({
 
 function LoginPage() {
   const navigate = useNavigate()
+  const { t, direction } = useI18n()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -34,19 +36,21 @@ function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10">
+    <main className="min-h-screen bg-slate-50 px-4 py-10" dir={direction}>
       <div className="mx-auto max-w-md rounded-2xl bg-white p-6 shadow-sm">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">Login to BBJF</h1>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {t('login.form.title')}
+          </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Access your membership dashboard.
+            {t('login.hero.description')}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
-              Email
+              {t('authPage.common.email')}
             </label>
             <input
               type="email"
@@ -60,7 +64,7 @@ function LoginPage() {
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
-              Password
+              {t('authPage.common.password')}
             </label>
             <input
               type="password"
@@ -68,7 +72,7 @@ function LoginPage() {
               onChange={(event) => setPassword(event.target.value)}
               required
               className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-600"
-              placeholder="Your password"
+              placeholder={t('login.password.placeholder')}
             />
           </div>
 
@@ -81,14 +85,14 @@ function LoginPage() {
             disabled={loading}
             className="w-full rounded-lg bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800 disabled:opacity-60"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? t('login.submit.loading') : t('auth.login')}
           </button>
         </form>
 
         <p className="mt-5 text-center text-sm text-slate-600">
-          Don&apos;t have an account?{' '}
+          {t('login.noAccount')}{' '}
           <Link to="/signup" className="font-medium text-emerald-700">
-            Create account
+            {t('login.needAccount.cta')}
           </Link>
         </p>
       </div>

@@ -1,10 +1,37 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import type { ChangeEvent, FormEvent, ReactNode } from 'react'
+import { useI18n, type TranslationKey } from '../lib/i18n'
 import { supabase } from '../lib/supabase/client'
+import {
+  MEMBERSHIP_BASE_FEE,
+  MEMBERSHIP_MANUAL_PAYMENT_DETAILS,
+  MEMBERSHIP_PAYMENT_QR_IMAGE_PATH,
+  MEMBERSHIP_RECEIPT_ALLOWED_TYPES,
+  MEMBERSHIP_RECEIPT_BUCKET,
+  MEMBERSHIP_RECEIPT_MAX_SIZE_BYTES,
+  MEMBERSHIP_RECEIPT_MAX_SIZE_LABEL,
+  type MembershipPayment,
+  createPendingMembershipPaymentPayload,
+  formatMembershipMoney,
+} from '../lib/membership-fee'
+import {
+  formatCnicInput,
+  formatMobileInput,
+  isPakistaniMobile,
+  normalizeMobile,
+  optionalText,
+  todayDate,
+} from '../lib/shared/formatters'
+import './register.css'
 
 export const Route = createFileRoute('/register')({
   component: RegisterPage,
 })
+
+const MAX_PHOTO_SIZE_BYTES = 2 * 1024 * 1024
+const ALLOWED_PHOTO_TYPES = ['image/png', 'image/jpeg', 'image/webp']
+const REGISTER_DRAFT_VERSION = 1
 
 const sindhDistricts = [
   'Badin',
@@ -15,23 +42,23 @@ const sindhDistricts = [
   'Jamshoro',
   'Karachi Central',
   'Karachi East',
-  'Karachi Keamari',
-  'Karachi Korangi',
-  'Karachi Malir',
   'Karachi South',
   'Karachi West',
   'Kashmore',
+  'Keamari',
   'Khairpur',
+  'Korangi',
   'Larkana',
+  'Malir',
   'Matiari',
   'Mirpur Khas',
-  'Naushahro Feroze',
+  'Naushahro Firoze',
   'Qambar Shahdadkot',
   'Sanghar',
   'Shaheed Benazirabad',
   'Shikarpur',
-  'Sukkur',
   'Sujawal',
+  'Sukkur',
   'Tando Allahyar',
   'Tando Muhammad Khan',
   'Tharparkar',
@@ -39,155 +66,623 @@ const sindhDistricts = [
   'Umerkot',
 ]
 
-const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+const talukasByDistrict: Record<string, string[]> = {
+  Badin: [
+    'Badin',
+    'Matli',
+    'Shaheed Fazil Rahu (Golarchi)',
+    'Talhar',
+    'Tando Bago',
+  ],
+  Sujawal: ['Jati', 'Kharo Chan', 'Mirpur Bathoro', 'Shah Bunder', 'Sujawal'],
+  Thatta: ['Ghorabari', 'Keti Bunder', 'Mirpur Sakro', 'Thatta'],
+  Dadu: ['Dadu', 'Johi', 'Khairpur Nathan Shah', 'Mehar'],
+  Hyderabad: ['Hyderabad City', 'Hyderabad Rural', 'Latifabad', 'Qasimabad'],
+  Jamshoro: ['Kotri', 'Manjhand', 'Sehwan Sharif', 'Thano Bula Khan'],
+  Matiari: ['Hala', 'Matiari', 'Saeedabad'],
+  'Tando Allahyar': ['Chamber', 'Jhando Mari', 'Tando Allahyar'],
+  'Tando Muhammad Khan': [
+    'Bulri Shah Karim',
+    'Tando Ghulam Hyder',
+    'Tando Muhammad Khan',
+  ],
+  'Karachi Central': [
+    'Gulberg',
+    'Liaquatabad',
+    'Nazimabad',
+    'New Karachi',
+    'North Nazimabad',
+  ],
+  'Karachi East': [
+    'Ferozabad',
+    'Gulshan-e-Iqbal',
+    'Gulzar-e-Hijri',
+    'Jamshed Quarters',
+  ],
+  'Karachi South': ['Aram Bagh', 'Civil Line', 'Garden', 'Lyari', 'Saddar'],
+  'Karachi West': ['Mango Pir', 'Mominabad', 'Orangi'],
+  Keamari: ['Baldia', 'Harbour', 'Mauripur', 'SITE'],
+  Korangi: ['Korangi', 'Landhi', 'Model Colony', 'Shah Faisal'],
+  Malir: [
+    'Airport',
+    'Bin Qasim',
+    'Gadap',
+    'Ibrahim Hyderi',
+    'Murad Memon',
+    'Shah Murad',
+  ],
+  Jacobabad: ['Garhi Khairo', 'Jacobabad', 'Thul'],
+  Kashmore: ['Kandhkot', 'Kashmore', 'Tangwani'],
+  Larkana: ['Bakrani', 'Dokri', 'Larkana', 'Ratodero'],
+  'Qambar Shahdadkot': [
+    'Mirokhan',
+    'Nasirabad',
+    'Qambar',
+    'Qubo Saeed Khan',
+    'Shahdadkot',
+    'Sijawal Junejo',
+    'Warah',
+  ],
+  Shikarpur: ['Garhi Yasin', 'Khanpur', 'Lakhi Ghulam Shah', 'Shikarpur'],
+  'Mirpur Khas': [
+    'Digri',
+    'Hussain Bux Mari',
+    'Jhuddo',
+    'Kot Ghulam Muhammad',
+    'Mirpur Khas',
+    'Shujabad',
+    'Sindhri',
+  ],
+  Tharparkar: [
+    'Chachro',
+    'Dahli',
+    'Diplo',
+    'Islamkot',
+    'Kaloi',
+    'Mithi',
+    'Nagarparkar',
+  ],
+  Umerkot: ['Kunri', 'Pithoro', 'Samaro', 'Umerkot'],
+  'Naushahro Firoze': [
+    'Bhiria',
+    'Kandiaro',
+    'Mehrabpur',
+    'Moro',
+    'Naushahro Firoze',
+  ],
+  Sanghar: [
+    'Jam Nawaz Ali',
+    'Khipro',
+    'Sanghar',
+    'Shahdadpur',
+    'Sinjhoro',
+    'Tando Adam',
+  ],
+  'Shaheed Benazirabad': ['Daur', 'Nawabshah', 'Qazi Ahmed', 'Sakrand'],
+  Ghotki: ['Daharki', 'Ghotki', 'Khangarh', 'Mirpur Mathelo', 'Ubauro'],
+  Khairpur: [
+    'Faiz Ganj',
+    'Gambat',
+    'Khairpur',
+    'Kingri',
+    'Kot Diji',
+    'Mirwah',
+    'Nara',
+    'Sobhodero',
+  ],
+  Sukkur: ['New Sukkur', 'Pano Aqil', 'Rohri', 'Salehpat', 'Sukkur City'],
+}
 
-const genderOptions = ['Male', 'Female', 'Other']
+const genderOptions = ['Male', 'Female', 'Other', 'Prefer not to say']
+const bloodGroupOptions = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+
+type MemberStatus = 'pending' | 'approved' | 'rejected'
 
 type ExistingMember = {
   id: string
-  status: 'pending' | 'approved' | 'rejected'
+  status: MemberStatus
+  address: string | null
+  date_of_birth: string | null
+  gender: string | null
+  education: string | null
+  blood_group: string | null
+  emergency_contact_name: string | null
+  emergency_contact_relation: string | null
+  emergency_contact_mobile: string | null
+  declaration_accepted: boolean
   full_name: string
   father_name: string
   cnic: string
   mobile: string
   district: string
   taluka: string | null
-  address: string | null
-  date_of_birth: string | null
-  gender: string | null
-  education: string | null
-  blood_group: string | null
   profession: string | null
   designation: string | null
   caste_branch: string | null
-  declaration_accepted: boolean
   photo_url: string
 }
 
+type RegisterFormState = {
+  fullName: string
+  fatherName: string
+  cnic: string
+  mobile: string
+  district: string
+  taluka: string
+  profession: string
+  designation: string
+  casteBranch: string
+  address: string
+  dateOfBirth: string
+  gender: string
+  education: string
+  bloodGroup: string
+  emergencyContactName: string
+  emergencyContactRelation: string
+  emergencyContactMobile: string
+  declarationAccepted: boolean
+}
+
+type FormField = keyof RegisterFormState | 'photo' | 'paymentReceipt'
+
+type FieldErrors = Partial<Record<FormField, string>>
+
+const initialForm: RegisterFormState = {
+  fullName: '',
+  fatherName: '',
+  cnic: '',
+  mobile: '',
+  district: '',
+  taluka: '',
+  profession: '',
+  designation: '',
+  casteBranch: '',
+  address: '',
+  dateOfBirth: '',
+  gender: '',
+  education: '',
+  bloodGroup: '',
+  emergencyContactName: '',
+  emergencyContactRelation: '',
+  emergencyContactMobile: '',
+  declarationAccepted: false,
+}
+
+const formSteps: Array<{
+  titleKey: TranslationKey
+  shortTitleKey: TranslationKey
+  descriptionKey: TranslationKey
+  fields: FormField[]
+}> = [
+  {
+    titleKey: 'register.step.identity.title',
+    shortTitleKey: 'register.step.identity.short',
+    descriptionKey: 'register.step.identity.desc',
+    fields: ['fullName', 'fatherName', 'cnic', 'mobile'],
+  },
+  {
+    titleKey: 'register.step.location.title',
+    shortTitleKey: 'register.step.location.short',
+    descriptionKey: 'register.step.location.desc',
+    fields: ['district', 'taluka', 'address'],
+  },
+  {
+    titleKey: 'register.step.profile.title',
+    shortTitleKey: 'register.step.profile.short',
+    descriptionKey: 'register.step.profile.desc',
+    fields: ['profession', 'designation', 'casteBranch', 'dateOfBirth', 'gender', 'education', 'bloodGroup'],
+  },
+  {
+    titleKey: 'register.step.emergency.title',
+    shortTitleKey: 'register.step.emergency.short',
+    descriptionKey: 'register.step.emergency.desc',
+    fields: ['emergencyContactName', 'emergencyContactRelation', 'emergencyContactMobile'],
+  },
+  {
+    titleKey: 'register.step.submit.title',
+    shortTitleKey: 'register.step.submit.short',
+    descriptionKey: 'register.step.submit.desc',
+    fields: ['photo', 'paymentReceipt', 'declarationAccepted'],
+  },
+]
+
 function RegisterPage() {
   const navigate = useNavigate()
+  const { t, direction } = useI18n()
 
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [userId, setUserId] = useState('')
-  const [existingMember, setExistingMember] = useState<ExistingMember | null>(
-    null,
-  )
+  const [existingMember, setExistingMember] = useState<ExistingMember | null>(null)
+  const [existingMembershipPayment, setExistingMembershipPayment] =
+    useState<MembershipPayment | null>(null)
 
-  const [fullName, setFullName] = useState('')
-  const [fatherName, setFatherName] = useState('')
-  const [cnic, setCnic] = useState('')
-  const [mobile, setMobile] = useState('')
-  const [district, setDistrict] = useState('')
-  const [taluka, setTaluka] = useState('')
-  const [address, setAddress] = useState('')
-  const [dateOfBirth, setDateOfBirth] = useState('')
-  const [gender, setGender] = useState('')
-  const [education, setEducation] = useState('')
-  const [bloodGroup, setBloodGroup] = useState('')
-  const [profession, setProfession] = useState('')
-  const [designation, setDesignation] = useState('')
-  const [casteBranch, setCasteBranch] = useState('')
-  const [declarationAccepted, setDeclarationAccepted] = useState(false)
+  const [form, setForm] = useState<RegisterFormState>(initialForm)
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [currentStep, setCurrentStep] = useState(0)
+
   const [photo, setPhoto] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [existingPhotoSignedUrl, setExistingPhotoSignedUrl] = useState<string | null>(null)
+  const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null)
 
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [draftSavedAt, setDraftSavedAt] = useState('')
+
+  const locked = existingMember?.status === 'approved'
+  const isPendingEdit = existingMember?.status === 'pending'
+  const isRejected = existingMember?.status === 'rejected'
+  const paymentReceiptLocked =
+    existingMembershipPayment?.status === 'paid' ||
+    existingMembershipPayment?.status === 'waived'
+  const isLastStep = currentStep === formSteps.length - 1
+  const localizedSteps = useMemo(() =>
+    formSteps.map((step) => ({
+      ...step,
+      title: t(step.titleKey),
+      shortTitle: t(step.shortTitleKey),
+      description: t(step.descriptionKey),
+    })),
+    [t],
+  )
+  const currentStepData = localizedSteps[currentStep]
+  const progressPercent = Math.round(((currentStep + 1) / formSteps.length) * 100)
+
+  const talukaOptions = useMemo(() => {
+    return form.district ? talukasByDistrict[form.district] || [] : []
+  }, [form.district])
+
+  const photoSrc = photoPreview || existingPhotoSignedUrl
 
   useEffect(() => {
     loadExisting()
   }, [])
 
+  useEffect(() => {
+    return () => {
+      if (photoPreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(photoPreview)
+      }
+    }
+  }, [photoPreview])
+
   async function loadExisting() {
     setLoading(true)
+    setError('')
 
     const {
       data: { user },
+      error: userError,
     } = await supabase.auth.getUser()
 
-    if (!user) {
+    if (userError || !user) {
       navigate({ to: '/login' })
       return
     }
 
     setUserId(user.id)
 
-    const { data, error } = await supabase
+    const { data: rawData, error: memberError } = await (supabase as any)
       .from('members')
       .select(
-        'id, status, full_name, father_name, cnic, mobile, district, taluka, address, date_of_birth, gender, education, blood_group, profession, designation, caste_branch, declaration_accepted, photo_url',
+        [
+          'id',
+          'status',
+          'address',
+          'date_of_birth',
+          'gender',
+          'education',
+          'blood_group',
+          'emergency_contact_name',
+          'emergency_contact_relation',
+          'emergency_contact_mobile',
+          'declaration_accepted',
+          'full_name',
+          'father_name',
+          'cnic',
+          'mobile',
+          'district',
+          'taluka',
+          'profession',
+          'designation',
+          'caste_branch',
+          'photo_url',
+        ].join(', '),
       )
       .eq('user_id', user.id)
       .maybeSingle()
 
-    if (error) {
-      setError(error.message)
+    if (memberError) {
+      setError(memberError.message)
       setLoading(false)
       return
     }
 
+    const data = rawData as unknown as ExistingMember | null
+
     if (data) {
       setExistingMember(data)
-      setFullName(data.full_name)
-      setFatherName(data.father_name)
-      setCnic(data.cnic)
-      setMobile(data.mobile)
-      setDistrict(data.district)
-      setTaluka(data.taluka ?? '')
-      setAddress(data.address ?? '')
-      setDateOfBirth(data.date_of_birth ?? '')
-      setGender(data.gender ?? '')
-      setEducation(data.education ?? '')
-      setBloodGroup(data.blood_group ?? '')
-      setProfession(data.profession ?? '')
-      setDesignation(data.designation ?? '')
-      setCasteBranch(data.caste_branch ?? '')
-      setDeclarationAccepted(data.declaration_accepted)
+      setForm(memberToForm(data))
+
+      const { data: paymentData } = await (supabase as any)
+        .from('membership_payments')
+        .select('*')
+        .eq('member_id', data.id)
+        .maybeSingle()
+
+      setExistingMembershipPayment((paymentData as MembershipPayment | null) ?? null)
+
+      if (data.photo_url) {
+        const { data: signed } = await supabase.storage
+          .from('member-photos')
+          .createSignedUrl(data.photo_url, 60 * 60)
+
+        setExistingPhotoSignedUrl(signed?.signedUrl ?? null)
+      }
+    } else {
+      const draft = readDraft(user.id)
+
+      if (draft) {
+        setForm({ ...initialForm, ...draft.form })
+        setDraftSavedAt(draft.savedAt)
+      }
     }
 
     setLoading(false)
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function updateField<K extends keyof RegisterFormState>(
+    field: K,
+    value: RegisterFormState[K],
+  ) {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }))
+
+    if (fieldErrors[field]) {
+      setFieldErrors((current) => {
+        const next = { ...current }
+        delete next[field]
+        return next
+      })
+    }
+
+    setError('')
+    setSuccess('')
+  }
+
+  function handleDistrictChange(value: string) {
+    setForm((current) => ({
+      ...current,
+      district: value,
+      taluka: '',
+    }))
+
+    setFieldErrors((current) => {
+      const next = { ...current }
+      delete next.district
+      delete next.taluka
+      return next
+    })
+
+    setError('')
+    setSuccess('')
+  }
+
+  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    setError('')
+    setSuccess('')
+
+    const file = event.target.files?.[0] ?? null
+    setPhoto(null)
+
+    if (photoPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreview)
+      setPhotoPreview(null)
+    }
+
+    if (!file) return
+
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      setFieldErrors((current) => ({
+        ...current,
+        photo: t('register.photo.hint'),
+      }))
+      event.target.value = ''
+      return
+    }
+
+    if (file.size > MAX_PHOTO_SIZE_BYTES) {
+      setFieldErrors((current) => ({
+        ...current,
+        photo: t('register.photo.hint'),
+      }))
+      event.target.value = ''
+      return
+    }
+
+    setPhoto(file)
+    setPhotoPreview(URL.createObjectURL(file))
+
+    setFieldErrors((current) => {
+      const next = { ...current }
+      delete next.photo
+      return next
+    })
+  }
+
+
+  function handlePaymentReceiptChange(event: ChangeEvent<HTMLInputElement>) {
+    setError('')
+    setSuccess('')
+
+    if (paymentReceiptLocked) {
+      setError(t('register.payment.receiptLocked'))
+      event.target.value = ''
+      return
+    }
+
+    const file = event.target.files?.[0] ?? null
+    setPaymentReceipt(null)
+
+    if (!file) return
+
+    if (!MEMBERSHIP_RECEIPT_ALLOWED_TYPES.includes(file.type)) {
+      setFieldErrors((current) => ({
+        ...current,
+        paymentReceipt: t('register.payment.receiptHint').replace('{size}', MEMBERSHIP_RECEIPT_MAX_SIZE_LABEL),
+      }))
+      event.target.value = ''
+      return
+    }
+
+    if (file.size > MEMBERSHIP_RECEIPT_MAX_SIZE_BYTES) {
+      setFieldErrors((current) => ({
+        ...current,
+        paymentReceipt: t('register.payment.receiptHint').replace('{size}', MEMBERSHIP_RECEIPT_MAX_SIZE_LABEL),
+      }))
+      event.target.value = ''
+      return
+    }
+
+    setPaymentReceipt(file)
+
+    setFieldErrors((current) => {
+      const next = { ...current }
+      delete next.paymentReceipt
+      return next
+    })
+  }
+
+  function validateStep(stepIndex: number) {
+    const step = formSteps[stepIndex]
+    const errors = validateForm()
+
+    const stepErrors: FieldErrors = {}
+
+    step.fields.forEach((field) => {
+      if (errors[field]) {
+        stepErrors[field] = errors[field]
+      }
+    })
+
+    setFieldErrors((current) => ({
+      ...current,
+      ...stepErrors,
+    }))
+
+    return stepErrors
+  }
+
+  function handleNextStep() {
+    const stepErrors = validateStep(currentStep)
+
+    if (Object.keys(stepErrors).length > 0) {
+      setError(t('register.error.fixHighlightedContinue'))
+      focusFirstInvalidField()
+      return
+    }
+
+    setError('')
+    setSuccess('')
+    setCurrentStep((step) => Math.min(step + 1, formSteps.length - 1))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function handlePreviousStep() {
+    setError('')
+    setSuccess('')
+    setCurrentStep((step) => Math.max(step - 1, 0))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function handleStepClick(targetStep: number) {
+    if (targetStep <= currentStep) {
+      setCurrentStep(targetStep)
+      setError('')
+      setSuccess('')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    const stepErrors = validateStep(currentStep)
+
+    if (Object.keys(stepErrors).length > 0) {
+      setError(t('register.error.completeCurrentStep'))
+      focusFirstInvalidField()
+      return
+    }
+
+    setCurrentStep(targetStep)
+    setError('')
+    setSuccess('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function saveDraft() {
+    if (!userId || locked) return
+
+    try {
+      const savedAt = new Date().toISOString()
+
+      localStorage.setItem(
+        draftKey(userId),
+        JSON.stringify({
+          version: REGISTER_DRAFT_VERSION,
+          savedAt,
+          form,
+        }),
+      )
+
+      setDraftSavedAt(savedAt)
+      setSuccess(t('register.draftSaved'))
+      setError('')
+    } catch {
+      setError(t('register.draftSaveFailed'))
+    }
+  }
+
+  function clearDraft() {
+    if (!userId) return
+
+    localStorage.removeItem(draftKey(userId))
+    setDraftSavedAt('')
+    setSuccess(t('register.draftCleared'))
+    setError('')
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
+    setSuccess('')
 
     if (!userId) {
-      setError('You must be logged in.')
+      setError(t('register.error.loginRequired'))
       return
     }
 
-    if (existingMember && existingMember.status !== 'pending') {
-      setError('Only pending membership forms can be edited.')
+    if (existingMember?.status === 'approved') {
+      setError(t('register.error.approvedLocked'))
       return
     }
 
-    if (!existingMember && !photo) {
-      setError('Photo is required.')
-      return
-    }
+    const allErrors = validateForm()
+    setFieldErrors(allErrors)
 
-    if (!fullName.trim() || !fatherName.trim()) {
-      setError('Full name and father name are required.')
-      return
-    }
+    if (Object.keys(allErrors).length > 0) {
+      const firstField = Object.keys(allErrors)[0] as FormField | undefined
+      const targetStep = formSteps.findIndex(
+        (step) => firstField && step.fields.includes(firstField),
+      )
 
-    if (!/^[0-9]{5}-[0-9]{7}-[0-9]$/.test(cnic.trim())) {
-      setError('CNIC format must be 12345-1234567-1')
-      return
-    }
+      if (targetStep >= 0) {
+        setCurrentStep(targetStep)
+      }
 
-    if (!district || !taluka.trim()) {
-      setError('District and taluka are required.')
-      return
-    }
-
-    if (!address.trim()) {
-      setError('Address is required.')
-      return
-    }
-
-    if (!declarationAccepted) {
-      setError('Please accept the membership declaration before submitting.')
+      setError(t('register.error.fixHighlightedSubmit'))
+      focusFirstInvalidField()
       return
     }
 
@@ -203,7 +698,7 @@ function RegisterPage() {
         .from('member-photos')
         .upload(photoPath, photo, {
           upsert: true,
-          contentType: photo.type,
+          contentType: photo.type || 'image/jpeg',
         })
 
       if (uploadError) {
@@ -213,29 +708,80 @@ function RegisterPage() {
       }
     }
 
+    let receiptPath = existingMembershipPayment?.receipt_path ?? null
+    let receiptFileName = existingMembershipPayment?.receipt_file_name ?? null
+    let receiptMimeType = existingMembershipPayment?.receipt_mime_type ?? null
+    let receiptSizeBytes = existingMembershipPayment?.receipt_size_bytes ?? null
+    let receiptUploadedAt = existingMembershipPayment?.receipt_uploaded_at ?? null
+
+    if (paymentReceipt && paymentReceiptLocked) {
+      setError(t('register.payment.receiptLocked'))
+      setSubmitting(false)
+      return
+    }
+
+    if (paymentReceipt) {
+      const extension = paymentReceipt.name.split('.').pop()?.toLowerCase() || 'jpg'
+      receiptPath = `${userId}/receipt-${Date.now()}.${extension}`
+      receiptFileName = paymentReceipt.name
+      receiptMimeType = paymentReceipt.type || 'application/octet-stream'
+      receiptSizeBytes = paymentReceipt.size
+      receiptUploadedAt = new Date().toISOString()
+
+      const { error: receiptUploadError } = await supabase.storage
+        .from(MEMBERSHIP_RECEIPT_BUCKET)
+        .upload(receiptPath, paymentReceipt, {
+          upsert: true,
+          contentType: receiptMimeType,
+        })
+
+      if (receiptUploadError) {
+        setError(receiptUploadError.message)
+        setSubmitting(false)
+        return
+      }
+    }
+
+    const normalizedMobile = normalizeMobile(form.mobile)
+    const normalizedEmergencyMobile = normalizeMobile(form.emergencyContactMobile)
+
     const payload = {
-      full_name: fullName.trim(),
-      father_name: fatherName.trim(),
-      cnic: cnic.trim(),
-      mobile: mobile.trim(),
-      district,
-      taluka: taluka.trim(),
-      address: address.trim(),
-      date_of_birth: dateOfBirth || null,
-      gender: gender || null,
-      education: education.trim() || null,
-      blood_group: bloodGroup || null,
-      profession: profession.trim() || null,
-      designation: designation.trim() || null,
-      caste_branch: casteBranch.trim() || null,
-      declaration_accepted: declarationAccepted,
+      full_name: form.fullName.trim(),
+      father_name: form.fatherName.trim(),
+      cnic: form.cnic.trim(),
+      mobile: normalizedMobile,
+      district: form.district,
+      taluka: form.taluka,
+      profession: optionalText(form.profession),
+      designation: optionalText(form.designation),
+      caste_branch: optionalText(form.casteBranch),
+      address: form.address.trim(),
+      date_of_birth: form.dateOfBirth || null,
+      gender: optionalText(form.gender),
+      education: optionalText(form.education),
+      blood_group: optionalText(form.bloodGroup),
+      emergency_contact_name: optionalText(form.emergencyContactName),
+      emergency_contact_relation: optionalText(form.emergencyContactRelation),
+      emergency_contact_mobile: normalizedEmergencyMobile || null,
+      declaration_accepted: form.declarationAccepted,
       photo_url: photoPath,
     }
 
+    let savedMemberId = existingMember?.id ?? ''
+
     if (existingMember) {
-      const { error: updateError } = await supabase
+      const updatePayload =
+        existingMember.status === 'rejected'
+          ? {
+              ...payload,
+              status: 'pending' as const,
+              rejection_reason: null,
+            }
+          : payload
+
+      const { error: updateError } = await (supabase as any)
         .from('members')
-        .update(payload)
+        .update(updatePayload)
         .eq('id', existingMember.id)
 
       if (updateError) {
@@ -244,122 +790,301 @@ function RegisterPage() {
         return
       }
     } else {
-      const { error: insertError } = await supabase.from('members').insert({
-        user_id: userId,
-        ...payload,
-        status: 'pending',
-      })
+      const { data: insertedMember, error: insertError } = await (supabase as any)
+        .from('members')
+        .insert({
+          user_id: userId,
+          ...payload,
+          status: 'pending',
+        })
+        .select('id, user_id')
+        .single()
 
       if (insertError) {
         setError(insertError.message)
         setSubmitting(false)
         return
       }
+
+      savedMemberId = insertedMember.id
     }
 
+    if (savedMemberId) {
+      const paymentAlreadyFinal =
+        existingMembershipPayment?.status === 'paid' ||
+        existingMembershipPayment?.status === 'waived'
+
+      if (!paymentAlreadyFinal) {
+        const paymentPayload = createPendingMembershipPaymentPayload(
+          savedMemberId,
+          userId,
+          {
+            receipt_path: receiptPath,
+            receipt_file_name: receiptFileName,
+            receipt_mime_type: receiptMimeType,
+            receipt_size_bytes: receiptSizeBytes,
+            receipt_uploaded_at: receiptUploadedAt,
+          },
+        )
+
+        const { error: paymentError } = await (supabase as any)
+          .from('membership_payments')
+          .upsert(paymentPayload, { onConflict: 'member_id' })
+
+        if (paymentError) {
+          setError(paymentError.message)
+          setSubmitting(false)
+          return
+        }
+      }
+    }
+
+    localStorage.removeItem(draftKey(userId))
+    setDraftSavedAt('')
     setSubmitting(false)
-    navigate({ to: '/dashboard' })
-  }
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-slate-50 px-4 py-10">
-        <div className="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow-sm">
-          <p className="text-slate-600">Loading form...</p>
-        </div>
-      </main>
+    setSuccess(
+      existingMember
+        ? t('register.success.updated')
+        : t('register.success.submitted'),
     )
+
+    window.setTimeout(() => {
+      navigate({ to: '/dashboard' })
+    }, 650)
   }
 
-  const locked = existingMember?.status !== undefined && existingMember.status !== 'pending'
+  function validateForm() {
+    const errors: FieldErrors = {}
+    const normalizedMobile = normalizeMobile(form.mobile)
+    const normalizedEmergencyMobile = normalizeMobile(form.emergencyContactMobile)
 
-  return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10">
-      <div className="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow-sm">
-        <div className="mb-6">
-          <p className="text-sm font-medium text-emerald-700">
-            Bilawal Bhutto Jayala Federation
-          </p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">
-            Membership Registration
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Submit your complete profile, contact details and photo for admin review.
-          </p>
-        </div>
+    if (!form.fullName.trim()) {
+      errors.fullName = t('register.error.fullNameRequired')
+    } else if (form.fullName.trim().length < 3) {
+      errors.fullName = t('register.error.fullNameShort')
+    }
 
-        {existingMember?.status === 'approved' ? (
-          <div className="mb-5 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
-            Your membership is approved. You cannot edit this form now.
-          </div>
-        ) : null}
+    if (!form.fatherName.trim()) {
+      errors.fatherName = t('register.error.fatherRequired')
+    } else if (form.fatherName.trim().length < 3) {
+      errors.fatherName = t('register.error.fullNameShort')
+    }
 
-        {existingMember?.status === 'rejected' ? (
-          <div className="mb-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">
-            Your application was rejected. Editing rejected forms is not enabled
-            yet.
-          </div>
-        ) : null}
+    if (!/^[0-9]{5}-[0-9]{7}-[0-9]$/.test(form.cnic.trim())) {
+      errors.cnic = t('register.error.cnicInvalid')
+    }
 
-        {error ? (
-          <div className="mb-5 rounded-xl bg-red-50 p-4 text-sm text-red-700">
-            {error}
-          </div>
-        ) : null}
+    if (!isPakistaniMobile(normalizedMobile)) {
+      errors.mobile = t('register.error.mobileInvalid')
+    }
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid gap-5 md:grid-cols-2">
-            <Field label="Full Name">
+    if (!form.district) {
+      errors.district = t('register.error.districtRequired')
+    }
+
+    if (!form.taluka) {
+      errors.taluka = t('register.error.talukaRequired')
+    }
+
+    if (!form.address.trim()) {
+      errors.address = t('register.error.addressRequired')
+    } else if (form.address.trim().length < 10) {
+      errors.address = t('register.error.addressRequired')
+    }
+
+    const requiredMessage = 'This field is required.'
+
+    if (!form.profession.trim()) {
+      errors.profession = requiredMessage
+    }
+
+    if (!form.designation.trim()) {
+      errors.designation = requiredMessage
+    }
+
+    if (!form.casteBranch.trim()) {
+      errors.casteBranch = requiredMessage
+    }
+
+    if (!form.dateOfBirth) {
+      errors.dateOfBirth = requiredMessage
+    } else if (form.dateOfBirth > todayDate()) {
+      errors.dateOfBirth = t('register.error.dobFuture')
+    }
+
+    if (!form.gender) {
+      errors.gender = requiredMessage
+    }
+
+    if (!form.education.trim()) {
+      errors.education = requiredMessage
+    }
+
+    if (!form.bloodGroup) {
+      errors.bloodGroup = requiredMessage
+    }
+
+    if (!form.emergencyContactName.trim()) {
+      errors.emergencyContactName = requiredMessage
+    }
+
+    if (!form.emergencyContactRelation.trim()) {
+      errors.emergencyContactRelation = requiredMessage
+    }
+
+    if (!normalizedEmergencyMobile) {
+      errors.emergencyContactMobile = requiredMessage
+    } else if (!isPakistaniMobile(normalizedEmergencyMobile)) {
+      errors.emergencyContactMobile =
+        t('register.error.emergencyMobileInvalid')
+    }
+
+    if (!photo && !existingMember?.photo_url) {
+      errors.photo = t('register.error.photoRequired')
+    }
+
+    if (
+      !paymentReceiptLocked &&
+      !paymentReceipt &&
+      !existingMembershipPayment?.receipt_path
+    ) {
+      errors.paymentReceipt = t('register.error.receiptRequired')
+    }
+
+    if (!form.declarationAccepted) {
+      errors.declarationAccepted = t('register.error.declarationRequired')
+    }
+
+    return errors
+  }
+
+  function getDescriptionIds(field: FormField, hasHint = false) {
+    const ids: string[] = []
+
+    if (hasHint) ids.push(`${field}-hint`)
+    if (fieldErrors[field]) ids.push(`${field}-error`)
+
+    return ids.length ? ids.join(' ') : undefined
+  }
+
+  function renderCurrentStep() {
+    if (currentStep === 0) {
+      return (
+        <FormSection
+          title={currentStepData.title}
+          description={currentStepData.description}
+        >
+          <div className="reg-grid">
+            <Field
+              name="fullName"
+              label={t('register.field.fullName')}
+              required
+              error={fieldErrors.fullName}
+            >
               <input
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
+                id="fullName"
+                value={form.fullName}
+                onChange={(event) => updateField('fullName', event.target.value)}
                 disabled={locked}
-                required
-                className="input"
+                className="reg-input"
                 placeholder="Enter full name"
+                autoComplete="name"
+                aria-invalid={Boolean(fieldErrors.fullName)}
+                aria-describedby={getDescriptionIds('fullName')}
               />
             </Field>
 
-            <Field label="Father Name">
+            <Field
+              name="fatherName"
+              label={t('register.field.fatherName')}
+              required
+              error={fieldErrors.fatherName}
+            >
               <input
-                value={fatherName}
-                onChange={(event) => setFatherName(event.target.value)}
+                id="fatherName"
+                value={form.fatherName}
+                onChange={(event) => updateField('fatherName', event.target.value)}
                 disabled={locked}
-                required
-                className="input"
-                placeholder="Enter father name"
+                className="reg-input"
+                placeholder="Enter father's name"
+                autoComplete="off"
+                aria-invalid={Boolean(fieldErrors.fatherName)}
+                aria-describedby={getDescriptionIds('fatherName')}
               />
             </Field>
 
-            <Field label="CNIC">
+            <Field
+              name="cnic"
+              label={t('register.field.cnic')}
+              required
+              hint={t('register.hint.cnic')}
+              error={fieldErrors.cnic}
+            >
               <input
-                value={cnic}
-                onChange={(event) => setCnic(event.target.value)}
+                id="cnic"
+                value={form.cnic}
+                onChange={(event) =>
+                  updateField('cnic', formatCnicInput(event.target.value))
+                }
                 disabled={locked}
-                required
-                className="input"
+                className="reg-input"
                 placeholder="12345-1234567-1"
+                inputMode="numeric"
+                autoComplete="off"
+                aria-invalid={Boolean(fieldErrors.cnic)}
+                aria-describedby={getDescriptionIds('cnic', true)}
               />
             </Field>
 
-            <Field label="Mobile">
+            <Field
+              name="mobile"
+              label={t('register.field.mobile')}
+              required
+              hint={t('register.hint.mobile')}
+              error={fieldErrors.mobile}
+            >
               <input
-                value={mobile}
-                onChange={(event) => setMobile(event.target.value)}
+                id="mobile"
+                value={form.mobile}
+                onChange={(event) =>
+                  updateField('mobile', formatMobileInput(event.target.value))
+                }
                 disabled={locked}
-                required
-                className="input"
+                className="reg-input"
                 placeholder="03001234567"
+                inputMode="tel"
+                autoComplete="tel"
+                aria-invalid={Boolean(fieldErrors.mobile)}
+                aria-describedby={getDescriptionIds('mobile', true)}
               />
             </Field>
+          </div>
+        </FormSection>
+      )
+    }
 
-            <Field label="District">
+    if (currentStep === 1) {
+      return (
+        <FormSection
+          title={currentStepData.title}
+          description={currentStepData.description}
+        >
+          <div className="reg-grid">
+            <Field
+              name="district"
+              label={t('register.field.district')}
+              required
+              error={fieldErrors.district}
+            >
               <select
-                value={district}
-                onChange={(event) => setDistrict(event.target.value)}
+                id="district"
+                value={form.district}
+                onChange={(event) => handleDistrictChange(event.target.value)}
                 disabled={locked}
-                required
-                className="input"
+                className="reg-input reg-select"
+                aria-invalid={Boolean(fieldErrors.district)}
+                aria-describedby={getDescriptionIds('district')}
               >
                 <option value="">Select district</option>
                 {sindhDistricts.map((item) => (
@@ -370,33 +1095,153 @@ function RegisterPage() {
               </select>
             </Field>
 
-            <Field label="Taluka / Town">
-              <input
-                value={taluka}
-                onChange={(event) => setTaluka(event.target.value)}
-                disabled={locked}
-                required
-                className="input"
-                placeholder="Enter taluka or town"
-              />
-            </Field>
-
-            <Field label="Date of Birth">
-              <input
-                type="date"
-                value={dateOfBirth}
-                onChange={(event) => setDateOfBirth(event.target.value)}
-                disabled={locked}
-                className="input"
-              />
-            </Field>
-
-            <Field label="Gender">
+            <Field
+              name="taluka"
+              label={t('register.field.taluka')}
+              required
+              error={fieldErrors.taluka}
+            >
               <select
-                value={gender}
-                onChange={(event) => setGender(event.target.value)}
+                id="taluka"
+                value={form.taluka}
+                onChange={(event) => updateField('taluka', event.target.value)}
+                disabled={locked || !form.district}
+                className="reg-input reg-select"
+                aria-invalid={Boolean(fieldErrors.taluka)}
+                aria-describedby={getDescriptionIds('taluka')}
+              >
+                <option value="">
+                  {form.district ? 'Select taluka' : 'Select district first'}
+                </option>
+                {talukaOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field
+              name="address"
+              label={t('register.field.address')}
+              required
+              error={fieldErrors.address}
+              className="span-2"
+            >
+              <textarea
+                id="address"
+                value={form.address}
+                onChange={(event) => updateField('address', event.target.value)}
                 disabled={locked}
-                className="input"
+                className="reg-input reg-textarea"
+                placeholder="House no., street, area, taluka, district"
+                autoComplete="street-address"
+                aria-invalid={Boolean(fieldErrors.address)}
+                aria-describedby={getDescriptionIds('address')}
+              />
+            </Field>
+          </div>
+        </FormSection>
+      )
+    }
+
+    if (currentStep === 2) {
+      return (
+        <FormSection
+          title={currentStepData.title}
+          description={currentStepData.description}
+        >
+          <div className="reg-grid">
+            <Field
+              name="profession"
+              label={t('register.field.profession')}
+              required
+              error={fieldErrors.profession}
+            >
+              <input
+                id="profession"
+                value={form.profession}
+                onChange={(event) => updateField('profession', event.target.value)}
+                disabled={locked}
+                className="reg-input"
+                placeholder={t('register.placeholder.profession')}
+                autoComplete="organization-title"
+                aria-invalid={Boolean(fieldErrors.profession)}
+                aria-describedby={getDescriptionIds('profession')}
+              />
+            </Field>
+
+            <Field
+              name="designation"
+              label={t('register.field.designation')}
+              required
+              error={fieldErrors.designation}
+            >
+              <input
+                id="designation"
+                value={form.designation}
+                onChange={(event) => updateField('designation', event.target.value)}
+                disabled={locked}
+                className="reg-input"
+                placeholder="Member / Volunteer / Office Bearer"
+                autoComplete="organization-title"
+                aria-invalid={Boolean(fieldErrors.designation)}
+                aria-describedby={getDescriptionIds('designation')}
+              />
+            </Field>
+
+            <Field
+              name="casteBranch"
+              label={t('register.field.casteBranch')}
+              required
+              error={fieldErrors.casteBranch}
+            >
+              <input
+                id="casteBranch"
+                value={form.casteBranch}
+                onChange={(event) => updateField('casteBranch', event.target.value)}
+                disabled={locked}
+                className="reg-input"
+                placeholder="Enter caste branch"
+                autoComplete="off"
+                aria-invalid={Boolean(fieldErrors.casteBranch)}
+                aria-describedby={getDescriptionIds('casteBranch')}
+              />
+            </Field>
+
+            <Field
+              name="dateOfBirth"
+              label={t('register.field.dateOfBirth')}
+              required
+              error={fieldErrors.dateOfBirth}
+            >
+              <input
+                id="dateOfBirth"
+                type="date"
+                value={form.dateOfBirth}
+                onChange={(event) => updateField('dateOfBirth', event.target.value)}
+                disabled={locked}
+                className="reg-input"
+                max={todayDate()}
+                aria-invalid={Boolean(fieldErrors.dateOfBirth)}
+                aria-describedby={getDescriptionIds('dateOfBirth')}
+              />
+            </Field>
+
+            <Field
+              name="gender"
+              label={t('register.field.gender')}
+              required
+              error={fieldErrors.gender}
+            >
+              <select
+                id="gender"
+                value={form.gender}
+                onChange={(event) => updateField('gender', event.target.value)}
+                disabled={locked}
+                className="reg-input reg-select"
+                aria-invalid={Boolean(fieldErrors.gender)}
+                aria-describedby={getDescriptionIds('gender')}
               >
                 <option value="">Select gender</option>
                 {genderOptions.map((item) => (
@@ -407,136 +1252,710 @@ function RegisterPage() {
               </select>
             </Field>
 
-            <Field label="Education">
+            <Field
+              name="education"
+              label={t('register.field.education')}
+              required
+              error={fieldErrors.education}
+            >
               <input
-                value={education}
-                onChange={(event) => setEducation(event.target.value)}
+                id="education"
+                value={form.education}
+                onChange={(event) => updateField('education', event.target.value)}
                 disabled={locked}
-                className="input"
-                placeholder="Optional"
+                className="reg-input"
+                placeholder={t('register.placeholder.education')}
+                autoComplete="off"
+                aria-invalid={Boolean(fieldErrors.education)}
+                aria-describedby={getDescriptionIds('education')}
               />
             </Field>
 
-            <Field label="Blood Group">
+            <Field
+              name="bloodGroup"
+              label={t('register.field.bloodGroup')}
+              required
+              error={fieldErrors.bloodGroup}
+            >
               <select
-                value={bloodGroup}
-                onChange={(event) => setBloodGroup(event.target.value)}
+                id="bloodGroup"
+                value={form.bloodGroup}
+                onChange={(event) => updateField('bloodGroup', event.target.value)}
                 disabled={locked}
-                className="input"
+                className="reg-input reg-select"
+                aria-invalid={Boolean(fieldErrors.bloodGroup)}
+                aria-describedby={getDescriptionIds('bloodGroup')}
               >
                 <option value="">Select blood group</option>
-                {bloodGroups.map((item) => (
+                {bloodGroupOptions.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
                 ))}
               </select>
             </Field>
-
-            <Field label="Profession">
-              <input
-                value={profession}
-                onChange={(event) => setProfession(event.target.value)}
-                disabled={locked}
-                className="input"
-                placeholder="Optional"
-              />
-            </Field>
-
-            <Field label="Designation">
-              <input
-                value={designation}
-                onChange={(event) => setDesignation(event.target.value)}
-                disabled={locked}
-                className="input"
-                placeholder="Optional designation or role"
-              />
-            </Field>
-
-            <Field label="Caste Branch / Category">
-              <input
-                value={casteBranch}
-                onChange={(event) => setCasteBranch(event.target.value)}
-                disabled={locked}
-                className="input"
-                placeholder="Optional"
-              />
-            </Field>
-
-            <Field label="Address">
-              <textarea
-                value={address}
-                onChange={(event) => setAddress(event.target.value)}
-                disabled={locked}
-                required
-                className="input min-h-24 resize-y md:col-span-2"
-                placeholder="Enter complete residential address"
-              />
-            </Field>
-
-            <Field label="Photo">
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(event) => setPhoto(event.target.files?.[0] ?? null)}
-                disabled={locked}
-                required={!existingMember}
-                className="block w-full text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-700 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-emerald-800"
-              />
-            </Field>
           </div>
+        </FormSection>
+      )
+    }
 
-          <label className="flex gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={declarationAccepted}
-              onChange={(event) => setDeclarationAccepted(event.target.checked)}
-              disabled={locked}
+    if (currentStep === 3) {
+      return (
+        <FormSection
+          title={currentStepData.title}
+          description={currentStepData.description}
+        >
+          <div className="reg-grid">
+            <Field
+              name="emergencyContactName"
+              label={t('register.field.contactName')}
               required
-              className="mt-1 h-4 w-4 shrink-0 accent-emerald-700"
-            />
-            <span>
-              I confirm that the information provided in this membership form is
-              correct and I agree to follow the organization membership rules.
-            </span>
-          </label>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              disabled={submitting || locked}
-              className="rounded-lg bg-emerald-700 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-60"
+              error={fieldErrors.emergencyContactName}
             >
-              {submitting ? 'Saving...' : existingMember ? 'Update Form' : 'Submit Form'}
-            </button>
+              <input
+                id="emergencyContactName"
+                value={form.emergencyContactName}
+                onChange={(event) =>
+                  updateField('emergencyContactName', event.target.value)
+                }
+                disabled={locked}
+                className="reg-input"
+                placeholder="Full name"
+                autoComplete="off"
+                aria-invalid={Boolean(fieldErrors.emergencyContactName)}
+                aria-describedby={getDescriptionIds('emergencyContactName')}
+              />
+            </Field>
 
-            <button
-              type="button"
-              onClick={() => navigate({ to: '/dashboard' })}
-              className="rounded-lg border border-slate-300 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            <Field
+              name="emergencyContactRelation"
+              label={t('register.field.relation')}
+              required
+              error={fieldErrors.emergencyContactRelation}
             >
-              Back to Dashboard
-            </button>
+              <input
+                id="emergencyContactRelation"
+                value={form.emergencyContactRelation}
+                onChange={(event) =>
+                  updateField('emergencyContactRelation', event.target.value)
+                }
+                disabled={locked}
+                className="reg-input"
+                placeholder={t('register.placeholder.relation')}
+                autoComplete="off"
+                aria-invalid={Boolean(fieldErrors.emergencyContactRelation)}
+                aria-describedby={getDescriptionIds('emergencyContactRelation')}
+              />
+            </Field>
+
+            <Field
+              name="emergencyContactMobile"
+              label={t('register.field.contactMobile')}
+              required
+              hint={t('register.hint.emergencyMobile')}
+              error={fieldErrors.emergencyContactMobile}
+            >
+              <input
+                id="emergencyContactMobile"
+                value={form.emergencyContactMobile}
+                onChange={(event) =>
+                  updateField(
+                    'emergencyContactMobile',
+                    formatMobileInput(event.target.value),
+                  )
+                }
+                disabled={locked}
+                className="reg-input"
+                placeholder="03001234567"
+                inputMode="tel"
+                autoComplete="tel"
+                aria-invalid={Boolean(fieldErrors.emergencyContactMobile)}
+                aria-describedby={getDescriptionIds('emergencyContactMobile', true)}
+              />
+            </Field>
           </div>
-        </form>
+        </FormSection>
+      )
+    }
+
+    return (
+      <FormSection
+        title={currentStepData.title}
+        description={currentStepData.description}
+      >
+        <div className="reg-photo-row">
+          <div className="reg-photo-preview">
+            {photoSrc ? (
+              <img
+                src={photoSrc}
+                alt={t('register.photo.alt')}
+                className="reg-photo-img"
+              />
+            ) : (
+              <div className="reg-photo-placeholder" aria-hidden="true">
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                </svg>
+                <span>{t('register.photo.none')}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="reg-photo-upload">
+            <label
+              className={`reg-upload-btn ${
+                locked ? 'is-disabled' : 'cursor-pointer'
+              }`}
+              htmlFor="photo"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              {photo ? photo.name : t('register.photo.choose')}
+            </label>
+
+            <input
+              id="photo"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={handlePhotoChange}
+              disabled={locked}
+              className="reg-sr-only"
+              aria-invalid={Boolean(fieldErrors.photo)}
+              aria-describedby={getDescriptionIds('photo', true)}
+            />
+
+            <p id="photo-hint" className="reg-upload-hint">
+              {t('register.photo.hint')}
+            </p>
+
+            {fieldErrors.photo ? (
+              <p id="photo-error" className="reg-error-text">
+                {fieldErrors.photo}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="reg-payment-panel rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+          <p className="reg-payment-title font-black">{t('register.fee.notice').replace('{amount}', formatMembershipMoney(MEMBERSHIP_BASE_FEE)).replace('{charges}', t('signup.fee.processingCharges'))}</p>
+          <p className="reg-payment-instruction mt-1 text-amber-800">
+            {t('register.fee.manualInstruction').replace('{bank}', MEMBERSHIP_MANUAL_PAYMENT_DETAILS.bankName).replace('{account}', MEMBERSHIP_MANUAL_PAYMENT_DETAILS.accountNumber)}
+          </p>
+
+          <div className="reg-payment-layout mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(260px,340px)]">
+            <div className="reg-payment-details grid gap-3 rounded-2xl bg-white/80 p-4 text-slate-900 ring-1 ring-amber-100 sm:grid-cols-2">
+              <div className="reg-payment-detail">
+                <p className="text-[0.68rem] font-black uppercase tracking-wide text-slate-500">
+                  {t('register.payment.bankName')}
+                </p>
+                <p className="mt-1 font-black">{MEMBERSHIP_MANUAL_PAYMENT_DETAILS.bankName}</p>
+              </div>
+              <div className="reg-payment-detail">
+                <p className="text-[0.68rem] font-black uppercase tracking-wide text-slate-500">
+                  {t('register.payment.accountTitle')}
+                </p>
+                <p className="mt-1 font-black">{MEMBERSHIP_MANUAL_PAYMENT_DETAILS.accountTitle}</p>
+              </div>
+              <div className="reg-payment-detail">
+                <p className="text-[0.68rem] font-black uppercase tracking-wide text-slate-500">
+                  {t('register.payment.accountNo')}
+                </p>
+                <p className="mt-1 font-black">{MEMBERSHIP_MANUAL_PAYMENT_DETAILS.accountNumber}</p>
+              </div>
+              <div className="reg-payment-detail">
+                <p className="text-[0.68rem] font-black uppercase tracking-wide text-slate-500">
+                  {t('register.payment.iban')}
+                </p>
+                <p className="mt-1 break-all font-black">{MEMBERSHIP_MANUAL_PAYMENT_DETAILS.iban}</p>
+              </div>
+              <div className="reg-payment-detail">
+                <p className="text-[0.68rem] font-black uppercase tracking-wide text-slate-500">
+                  {t('register.payment.network')}
+                </p>
+                <p className="mt-1 font-black">{MEMBERSHIP_MANUAL_PAYMENT_DETAILS.paymentNetwork}</p>
+              </div>
+              <div className="reg-payment-detail">
+                <p className="text-[0.68rem] font-black uppercase tracking-wide text-slate-500">
+                  {t('register.payment.tillId')}
+                </p>
+                <p className="mt-1 font-black">{MEMBERSHIP_MANUAL_PAYMENT_DETAILS.tillId}</p>
+              </div>
+            </div>
+
+            <div className="reg-payment-qr overflow-hidden rounded-2xl border border-amber-200 bg-white p-3 text-center shadow-sm">
+              <img
+                src={MEMBERSHIP_PAYMENT_QR_IMAGE_PATH}
+                alt="Membership fee payment QR code"
+                className="reg-payment-qr-img mx-auto w-full max-w-[300px] rounded-xl object-contain"
+                loading="lazy"
+              />
+              <p className="mt-3 text-sm font-bold text-slate-900">
+                {t('register.payment.qrHelp').replace('{network}', MEMBERSHIP_MANUAL_PAYMENT_DETAILS.paymentNetwork).replace('{tillId}', MEMBERSHIP_MANUAL_PAYMENT_DETAILS.tillId)}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">
+                {t('register.payment.afterPayment')}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label
+              className={`reg-upload-btn reg-payment-upload ${
+                paymentReceiptLocked ? 'is-disabled' : 'cursor-pointer'
+              }`}
+              htmlFor="paymentReceipt"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              {paymentReceipt
+                ? paymentReceipt.name
+                : existingMembershipPayment?.receipt_file_name ||
+                  (existingMembershipPayment?.receipt_path
+                    ? t('register.payment.receiptUploaded')
+                    : t('register.payment.uploadReceipt'))}
+            </label>
+
+            <input
+              id="paymentReceipt"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,application/pdf"
+              onChange={handlePaymentReceiptChange}
+              disabled={paymentReceiptLocked}
+              className="reg-sr-only"
+              aria-invalid={Boolean(fieldErrors.paymentReceipt)}
+              aria-describedby={getDescriptionIds('paymentReceipt', true)}
+            />
+
+            <p id="paymentReceipt-hint" className="reg-upload-hint mt-2">
+              {t('register.payment.receiptHint').replace('{size}', MEMBERSHIP_RECEIPT_MAX_SIZE_LABEL)}
+            </p>
+
+            {paymentReceiptLocked ? (
+              <p className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-800">
+                {t('register.payment.receiptLocked')}
+              </p>
+            ) : null}
+
+            {fieldErrors.paymentReceipt ? (
+              <p id="paymentReceipt-error" className="reg-error-text">
+                {fieldErrors.paymentReceipt}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        <label
+          className={`reg-declaration ${
+            form.declarationAccepted ? 'reg-declaration--checked' : ''
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={form.declarationAccepted}
+            onChange={(event) =>
+              updateField('declarationAccepted', event.target.checked)
+            }
+            disabled={locked}
+            className="reg-checkbox"
+            aria-invalid={Boolean(fieldErrors.declarationAccepted)}
+            aria-describedby={getDescriptionIds('declarationAccepted')}
+          />
+          <span>
+            {t('register.declaration')}
+          </span>
+        </label>
+
+        {fieldErrors.declarationAccepted ? (
+          <p id="declarationAccepted-error" className="reg-error-text">
+            {fieldErrors.declarationAccepted}
+          </p>
+        ) : null}
+      </FormSection>
+    )
+  }
+
+  if (loading) {
+    return (
+      <>
+        <main className="reg-page" dir={direction}>
+          <div className="reg-card">
+            <div className="reg-loading">
+              <span className="reg-spinner" />
+              <p>{t('register.loading')}</p>
+            </div>
+          </div>
+        </main>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <main className="reg-page" dir={direction}>
+        <div className="reg-bg-pattern" aria-hidden="true" />
+
+        <div className="reg-card">
+          <div className="reg-header">
+            <div className="reg-header-badge">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+              {t('register.brand')}
+            </div>
+
+            <h1 className="reg-title">{t('register.title')}</h1>
+
+            <p className="reg-subtitle">
+              {t('register.subtitle')}
+            </p>
+
+            <MembershipFeeSummary t={t} />
+
+            <div className="reg-title-line" />
+          </div>
+
+          <div className="reg-progress-wrap" aria-label={t('register.progressLabel')}>
+            <div className="reg-progress-top">
+              <span>
+                {t('register.stepOf').replace('{current}', String(currentStep + 1)).replace('{total}', String(formSteps.length))}
+              </span>
+              <strong>{t('register.complete').replace('{percent}', String(progressPercent))}</strong>
+            </div>
+
+            <div className="reg-progress-track" aria-hidden="true">
+              <div
+                className="reg-progress-fill"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+
+            <div className="reg-step-tabs">
+              {localizedSteps.map((step, index) => (
+                <button
+                  key={step.titleKey}
+                  type="button"
+                  className={`reg-step-tab ${
+                    index === currentStep ? 'is-active' : ''
+                  } ${index < currentStep ? 'is-done' : ''}`}
+                  onClick={() => handleStepClick(index)}
+                  disabled={locked && index !== currentStep}
+                  aria-current={index === currentStep ? 'step' : undefined}
+                >
+                  <span>{index + 1}</span>
+                  {step.shortTitle}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {existingMember?.status === 'approved' ? (
+            <div className="reg-banner reg-banner--success">
+              <span className="reg-banner-icon">✓</span>
+              {t('register.approvedBanner')}
+            </div>
+          ) : null}
+
+          {isPendingEdit ? (
+            <div className="reg-banner reg-banner--info">
+              <span className="reg-banner-icon">i</span>
+              {t('register.pendingEditBanner')}
+            </div>
+          ) : null}
+
+          {isRejected ? (
+            <div className="reg-banner reg-banner--warning">
+              <span className="reg-banner-icon">!</span>
+              {t('register.rejectedBanner')}
+            </div>
+          ) : null}
+
+          {draftSavedAt && !existingMember ? (
+            <div className="reg-banner reg-banner--info">
+              <span className="reg-banner-icon">i</span>
+              {t('register.draftAvailable')}
+            </div>
+          ) : null}
+
+          {error ? (
+            <div className="reg-banner reg-banner--error" role="alert">
+              <span className="reg-banner-icon">!</span>
+              {error}
+            </div>
+          ) : null}
+
+          {success ? (
+            <div className="reg-banner reg-banner--success" role="status">
+              <span className="reg-banner-icon">✓</span>
+              {success}
+            </div>
+          ) : null}
+
+          <form onSubmit={handleSubmit} className="reg-form" noValidate>
+            {renderCurrentStep()}
+
+            <div className="reg-actions">
+              <div className="reg-actions-left">
+                {currentStep > 0 ? (
+                  <button
+                    type="button"
+                    onClick={handlePreviousStep}
+                    className="reg-btn-secondary"
+                  >
+                    ← {t('register.previous')}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => navigate({ to: '/dashboard' })}
+                    className="reg-btn-secondary"
+                  >
+                    ← {t('register.backDashboard')}
+                  </button>
+                )}
+
+                {!locked ? (
+                  <button
+                    type="button"
+                    onClick={saveDraft}
+                    className="reg-btn-soft"
+                  >
+                    {t('register.saveDraft')}
+                  </button>
+                ) : null}
+
+                {draftSavedAt && !locked ? (
+                  <button
+                    type="button"
+                    onClick={clearDraft}
+                    className="reg-btn-soft reg-btn-soft--danger"
+                  >
+                    {t('register.clearDraft')}
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="reg-actions-right">
+                {!isLastStep ? (
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    disabled={locked}
+                    className="reg-btn-primary"
+                  >
+                    {t('register.nextStep')} →
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={submitting || locked}
+                    className="reg-btn-primary"
+                  >
+                    {submitting ? (
+                      <>
+                        <span className="reg-spinner reg-spinner--sm" />
+                        {t('register.saving')}
+                      </>
+                    ) : isRejected ? (
+                      t('register.resubmit')
+                    ) : existingMember ? (
+                      t('register.updateForm')
+                    ) : (
+                      t('register.submitApplication')
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </form>
+        </div>
+      </main>
+    </>
+  )
+}
+
+
+function MembershipFeeSummary({ t }: { t: (key: TranslationKey) => string }) {
+  return (
+    <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-left text-sm text-amber-950 shadow-sm">
+      <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
+        {t('signup.fee.label')}
+      </p>
+      <p className="mt-2 text-base font-black text-amber-950">
+        {formatMembershipMoney(MEMBERSHIP_BASE_FEE)} + {t('signup.fee.processingCharges')}
+      </p>
+      <p className="mt-1 leading-6 text-amber-800">
+        {t('register.fee.payVia').replace('{bank}', MEMBERSHIP_MANUAL_PAYMENT_DETAILS.bankName)}
+      </p>
+    </div>
+  )
+}
+
+function FormSection({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description: string
+  children: ReactNode
+}) {
+  return (
+    <section className="reg-section">
+      <div className="reg-section-header">
+        <div>
+          <h2 className="reg-section-title">{title}</h2>
+          <p className="reg-section-desc">{description}</p>
+        </div>
       </div>
-    </main>
+
+      <div className="reg-section-body">{children}</div>
+    </section>
   )
 }
 
 function Field({
+  name,
   label,
   children,
+  required,
+  hint,
+  error,
+  className = '',
 }: {
+  name: FormField
   label: string
-  children: React.ReactNode
+  children: ReactNode
+  required?: boolean
+  hint?: string
+  error?: string
+  className?: string
 }) {
   return (
-    <label className="block">
-      <span className="mb-1 block text-sm font-medium text-slate-700">
+    <div className={`reg-field ${className}`}>
+      <label htmlFor={name} className="reg-label">
         {label}
-      </span>
+        {required ? (
+          <span className="reg-required" aria-hidden="true">
+            {' '}
+            *
+          </span>
+        ) : null}
+      </label>
+
+      {hint ? (
+        <span id={`${name}-hint`} className="reg-hint">
+          {hint}
+        </span>
+      ) : null}
+
       {children}
-    </label>
+
+      {error ? (
+        <p id={`${name}-error`} className="reg-error-text">
+          {error}
+        </p>
+      ) : null}
+    </div>
   )
+}
+
+function memberToForm(data: ExistingMember): RegisterFormState {
+  return {
+    fullName: data.full_name,
+    fatherName: data.father_name,
+    cnic: data.cnic,
+    mobile: data.mobile,
+    district: data.district,
+    taluka: data.taluka ?? '',
+    profession: data.profession ?? '',
+    designation: data.designation ?? '',
+    casteBranch: data.caste_branch ?? '',
+    address: data.address ?? '',
+    dateOfBirth: data.date_of_birth ?? '',
+    gender: data.gender ?? '',
+    education: data.education ?? '',
+    bloodGroup: data.blood_group ?? '',
+    emergencyContactName: data.emergency_contact_name ?? '',
+    emergencyContactRelation: data.emergency_contact_relation ?? '',
+    emergencyContactMobile: data.emergency_contact_mobile ?? '',
+    declarationAccepted: data.declaration_accepted,
+  }
+}
+
+function draftKey(userId: string) {
+  return `bbjf-register-draft:${REGISTER_DRAFT_VERSION}:${userId}`
+}
+
+function readDraft(userId: string) {
+  try {
+    const raw = localStorage.getItem(draftKey(userId))
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw) as {
+      version?: number
+      savedAt?: string
+      form?: Partial<RegisterFormState>
+    }
+
+    if (parsed.version !== REGISTER_DRAFT_VERSION || !parsed.form) {
+      return null
+    }
+
+    return {
+      savedAt: parsed.savedAt ?? '',
+      form: parsed.form,
+    }
+  } catch {
+    return null
+  }
+}
+
+function focusFirstInvalidField() {
+  window.setTimeout(() => {
+    const firstInvalid = document.querySelector<HTMLElement>(
+      '[aria-invalid="true"]',
+    )
+
+    firstInvalid?.focus()
+  }, 50)
 }

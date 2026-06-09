@@ -1,5 +1,14 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".output",
+    ".vinxi",
+    ".tanstack",
+    "backups",
+    "backups/**"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",

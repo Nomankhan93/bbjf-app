@@ -1,24 +1,25 @@
-# BBJF Register Designation Patch
+# BBJF multilingual register patch
 
-## Scope
-- Membership portal only.
-- Adds an optional member `designation` / role field.
-- Does not add program, finance, welfare, or organization-management modules.
+This patch ports safe membership-only pieces from the JAS project into BBJF:
 
-## Updated files
-- `src/routes/register.tsx`
-- `src/routes/dashboard.tsx`
-- `src/routes/admin.tsx`
-- `src/routes/admin/members/$id.tsx`
-- `src/routes/card.tsx`
-- `src/routes/admin/members/$id/card.tsx`
-- `src/routes/verify/$memberNo.tsx`
-- `src/components/MembershipCard.tsx`
-- `src/lib/verify/actions.ts`
-- `src/lib/supabase/database.types.ts`
-- `supabase/migrations/20260609133500_add_member_designation.sql`
+- `src/lib/i18n.tsx` for English, Urdu and Sindhi language switching.
+- `src/lib/shared/formatters.ts` for CNIC, mobile, optional text and date helpers.
+- `src/routes/register.css` for the advanced multi-step registration design.
+- `src/routes/register.tsx` upgraded to the JAS-style multi-step form and adapted for BBJF.
+- `src/lib/membership-fee.ts` for manual membership fee/receipt helper constants.
+- Root header wrapped in `I18nProvider` and language switcher added.
+- Login/signup pages use the i18n provider for key labels/messages.
+- `src/router.tsx` and old demo `src/components/Header.tsx` cleaned so `npx tsc --noEmit` can pass.
+- Database migration adds missing member fields, designation, emergency contact fields, manual payment records and receipt storage bucket.
 
-## Notes
-- The designation field is optional so old member records continue to work.
-- Admin list search now includes designation.
-- Dashboard, admin detail, digital card, admin card preview, and public verify page show designation when available.
+Not included intentionally:
+
+- JAS programs modules.
+- JAS finance module.
+- JAS CMS/news/gallery/committee modules.
+- JAS public website routes.
+
+Manual follow-up:
+
+- Replace placeholder BBJF payment account details in `src/lib/membership-fee.ts`.
+- Replace `MEMBERSHIP_PAYMENT_QR_IMAGE_PATH` with the real BBJF payment QR image when ready.
