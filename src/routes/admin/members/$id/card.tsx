@@ -79,7 +79,7 @@ function AdminMemberCardPage() {
     const { data, error } = await supabase
       .from('members')
       .select(
-        'id, user_id, member_no, full_name, father_name, cnic, mobile, district, taluka, address, date_of_birth, gender, education, blood_group, profession, designation, caste_branch, photo_url, status, rejection_reason, reviewed_at, approved_at, created_at',
+        'id, user_id, member_no, full_name, father_name, cnic, mobile, district, taluka, address, date_of_birth, gender, education, blood_group, profession, designation, designation_level, designation_area, caste_branch, photo_url, status, rejection_reason, reviewed_at, approved_at, created_at',
       )
       .eq('id', id)
       .single()

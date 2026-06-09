@@ -25,6 +25,8 @@ type Member = {
   blood_group: string | null
   profession: string | null
   designation: string | null
+  designation_level: string | null
+  designation_area: string | null
   caste_branch: string | null
   declaration_accepted: boolean
   photo_url: string
@@ -259,6 +261,8 @@ function AdminMemberDetailPage() {
               <InfoItem label={t('dashboard.bloodGroup')} value={member.blood_group} />
               <InfoItem label={t('dashboard.profession')} value={member.profession} />
               <InfoItem label={t('dashboard.designation')} value={member.designation} />
+              <InfoItem label={t('dashboard.designationLevel')} value={member.designation_level} />
+              <InfoItem label={t('dashboard.designationArea')} value={member.designation_area} />
               <InfoItem label={t('dashboard.casteBranch')} value={member.caste_branch} />
               <InfoItem
                 label={t('dashboard.declaration')}

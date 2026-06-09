@@ -1,21 +1,24 @@
-# BBJF i18n dashboard/admin/card patch
+# BBJF Designation Scope Patch
 
-## Scope
+This patch keeps the app limited to the membership portal scope and improves office-bearer designation data.
 
-This patch keeps the project as a membership portal only. It extends the existing English / Urdu / Sindhi i18n system beyond login/signup/register.
+## Added fields
 
-## Changed
+- `designation_level` — UC, City, Taluka, District, Divisional, or Provincial.
+- `designation_area` — the actual jurisdiction/area for the designation, for example UC Kunri-1, City Kunri, Taluka Kunri, District Umerkot, Mirpurkhas Division, or Sindh Province.
 
-- Added translation keys for common labels, dashboard, admin panel, card pages, membership card labels, and public verification page.
-- Connected `/dashboard` to i18n and localized status/profile labels.
-- Connected `/card` to i18n and localized card page copy/buttons/errors.
-- Connected `/admin` to i18n and localized member list labels/search/filter/statuses.
-- Connected `/admin/members/$id` to i18n and localized member detail/review labels.
-- Connected `/admin/members/$id/card` to i18n and localized admin card preview page.
-- Connected `/verify/$memberNo` to i18n and localized public verification results.
-- Localized reusable `MembershipCard` front/back labels and terms.
+## Updated screens
 
-## Tests
+- Register form profile step
+- Dashboard member profile
+- Admin members list and search
+- Admin member detail
+- User digital card
+- Admin card preview
+- Public verification page
 
-- `npx tsc --noEmit`
-- `npm run build`
+## Suggested meaning
+
+- Designation / Office Title: the role, for example Vice President.
+- Designation Level: the organizational level, for example District.
+- Designation Area / Jurisdiction: where that role applies, for example District Umerkot.

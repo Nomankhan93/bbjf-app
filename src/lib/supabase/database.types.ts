@@ -60,11 +60,16 @@ export type Database = {
           date_of_birth: string | null
           declaration_accepted: boolean
           designation: string | null
+          designation_area: string | null
+          designation_level: string | null
           district: string
           education: string | null
+          emergency_contact_mobile: string | null
+          emergency_contact_name: string | null
+          emergency_contact_relation: string | null
           father_name: string
-          gender: string | null
           full_name: string
+          gender: string | null
           id: string
           member_no: string | null
           mobile: string
@@ -88,11 +93,16 @@ export type Database = {
           date_of_birth?: string | null
           declaration_accepted?: boolean
           designation?: string | null
+          designation_area?: string | null
+          designation_level?: string | null
           district: string
           education?: string | null
+          emergency_contact_mobile?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_relation?: string | null
           father_name: string
-          gender?: string | null
           full_name: string
+          gender?: string | null
           id?: string
           member_no?: string | null
           mobile: string
@@ -116,11 +126,16 @@ export type Database = {
           date_of_birth?: string | null
           declaration_accepted?: boolean
           designation?: string | null
+          designation_area?: string | null
+          designation_level?: string | null
           district?: string
           education?: string | null
+          emergency_contact_mobile?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_relation?: string | null
           father_name?: string
-          gender?: string | null
           full_name?: string
+          gender?: string | null
           id?: string
           member_no?: string | null
           mobile?: string
@@ -183,19 +198,12 @@ export type Database = {
       approve_member: {
         Args: { _member_id: string; _reviewed_by?: string }
         Returns: {
-          address: string | null
           approved_at: string | null
-          blood_group: string | null
           caste_branch: string | null
           cnic: string
           created_at: string
-          date_of_birth: string | null
-          declaration_accepted: boolean
-          designation: string | null
           district: string
-          education: string | null
           father_name: string
-          gender: string | null
           full_name: string
           id: string
           member_no: string | null
@@ -223,19 +231,12 @@ export type Database = {
           _reviewed_by?: string
         }
         Returns: {
-          address: string | null
           approved_at: string | null
-          blood_group: string | null
           caste_branch: string | null
           cnic: string
           created_at: string
-          date_of_birth: string | null
-          declaration_accepted: boolean
-          designation: string | null
           district: string
-          education: string | null
           father_name: string
-          gender: string | null
           full_name: string
           id: string
           member_no: string | null

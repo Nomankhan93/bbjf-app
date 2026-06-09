@@ -21,6 +21,8 @@ export type MembershipCardMember = {
   blood_group: string | null
   profession: string | null
   designation: string | null
+  designation_level: string | null
+  designation_area: string | null
   caste_branch: string | null
   photo_url?: string | null
   status: 'pending' | 'approved' | 'rejected'
@@ -162,6 +164,8 @@ function CardFront({
               <Info label={t('dashboard.bloodGroup')} value={member.blood_group} />
               <Info label={t('dashboard.profession')} value={member.profession} />
               <Info label={t('dashboard.designation')} value={member.designation} />
+              <Info label={t('dashboard.designationLevel')} value={member.designation_level} />
+              <Info label={t('dashboard.designationArea')} value={member.designation_area} />
               <Info label={t('card.wingCategory')} value={member.caste_branch} />
               <Info
                 label={t('card.approvedDate')}
@@ -268,6 +272,8 @@ function CardBack({
                 <Info label={t('dashboard.bloodGroup')} value={member.blood_group} />
                 <Info label={t('dashboard.profession')} value={member.profession} />
                 <Info label={t('dashboard.designation')} value={member.designation} />
+                <Info label={t('dashboard.designationLevel')} value={member.designation_level} />
+                <Info label={t('dashboard.designationArea')} value={member.designation_area} />
                 <Info label={t('card.wingCategory')} value={member.caste_branch} />
               </div>
             </div>

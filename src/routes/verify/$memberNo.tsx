@@ -17,6 +17,8 @@ type VerifyResult = {
     district: string
     taluka: string | null
     designation: string | null
+    designation_level: string | null
+    designation_area: string | null
     status: 'pending' | 'approved' | 'rejected'
     approved_at: string | null
   } | null
@@ -133,6 +135,8 @@ function VerifyMemberPage() {
                 <Info label={t('dashboard.district')} value={result.member.district} />
                 <Info label={t('card.talukaTown')} value={result.member.taluka} />
                 <Info label={t('dashboard.designation')} value={result.member.designation} />
+                <Info label={t('dashboard.designationLevel')} value={result.member.designation_level} />
+                <Info label={t('dashboard.designationArea')} value={result.member.designation_area} />
                 <Info
                   label={t('verify.approvedAt')}
                   value={formatDate(result.member.approved_at, language) ?? t('common.na')}

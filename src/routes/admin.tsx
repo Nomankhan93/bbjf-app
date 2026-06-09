@@ -21,6 +21,8 @@ type Member = {
   district: string
   taluka: string | null
   designation: string | null
+  designation_level: string | null
+  designation_area: string | null
   photo_url: string
   status: 'pending' | 'approved' | 'rejected'
   member_no: string | null
@@ -71,6 +73,8 @@ function AdminPage() {
         member.district.toLowerCase().includes(query) ||
         (member.taluka ?? '').toLowerCase().includes(query) ||
         (member.designation ?? '').toLowerCase().includes(query) ||
+        (member.designation_level ?? '').toLowerCase().includes(query) ||
+        (member.designation_area ?? '').toLowerCase().includes(query) ||
         (member.member_no ?? '').toLowerCase().includes(query)
 
       return matchesStatus && matchesSearch
@@ -109,7 +113,7 @@ function AdminPage() {
     const { data, error } = await supabase
       .from('members')
       .select(
-        'id, full_name, cnic, mobile, district, taluka, designation, photo_url, status, member_no, created_at',
+        'id, full_name, cnic, mobile, district, taluka, designation, designation_level, designation_area, photo_url, status, member_no, created_at',
       )
       .order('created_at', { ascending: false })
 
@@ -230,7 +234,12 @@ function AdminPage() {
                     </td>
 
                     <td className="py-3 text-slate-700">
-                      {member.designation || t('common.notProvided')}
+                      <p>{member.designation || t('common.notProvided')}</p>
+                      <p className="text-xs text-slate-500">
+                        {[member.designation_level, member.designation_area]
+                          .filter(Boolean)
+                          .join(' · ') || t('common.notProvided')}
+                      </p>
                     </td>
 
                     <td className="py-3 text-slate-700">{member.cnic}</td>

@@ -175,6 +175,7 @@ const talukasByDistrict: Record<string, string[]> = {
 
 const genderOptions = ['Male', 'Female', 'Other', 'Prefer not to say']
 const bloodGroupOptions = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+const designationLevelOptions = ['UC', 'City', 'Taluka', 'District', 'Divisional', 'Provincial']
 
 type MemberStatus = 'pending' | 'approved' | 'rejected'
 
@@ -198,6 +199,8 @@ type ExistingMember = {
   taluka: string | null
   profession: string | null
   designation: string | null
+  designation_level: string | null
+  designation_area: string | null
   caste_branch: string | null
   photo_url: string
 }
@@ -211,6 +214,8 @@ type RegisterFormState = {
   taluka: string
   profession: string
   designation: string
+  designationLevel: string
+  designationArea: string
   casteBranch: string
   address: string
   dateOfBirth: string
@@ -236,6 +241,8 @@ const initialForm: RegisterFormState = {
   taluka: '',
   profession: '',
   designation: '',
+  designationLevel: '',
+  designationArea: '',
   casteBranch: '',
   address: '',
   dateOfBirth: '',
@@ -270,7 +277,17 @@ const formSteps: Array<{
     titleKey: 'register.step.profile.title',
     shortTitleKey: 'register.step.profile.short',
     descriptionKey: 'register.step.profile.desc',
-    fields: ['profession', 'designation', 'casteBranch', 'dateOfBirth', 'gender', 'education', 'bloodGroup'],
+    fields: [
+      'profession',
+      'designation',
+      'designationLevel',
+      'designationArea',
+      'casteBranch',
+      'dateOfBirth',
+      'gender',
+      'education',
+      'bloodGroup',
+    ],
   },
   {
     titleKey: 'register.step.emergency.title',
@@ -386,6 +403,8 @@ function RegisterPage() {
           'taluka',
           'profession',
           'designation',
+          'designation_level',
+          'designation_area',
           'caste_branch',
           'photo_url',
         ].join(', '),
@@ -406,12 +425,14 @@ function RegisterPage() {
       setForm(memberToForm(data))
 
       const { data: paymentData } = await (supabase as any)
-        .from('membership_payments')
-        .select('*')
-        .eq('member_id', data.id)
-        .maybeSingle()
+  .from('membership_payments')
+  .select('*')
+  .eq('member_id', data.id)
+  .maybeSingle()
 
-      setExistingMembershipPayment((paymentData as MembershipPayment | null) ?? null)
+setExistingMembershipPayment((paymentData ?? null) as MembershipPayment | null)
+
+      setExistingMembershipPayment(paymentData ?? null)
 
       if (data.photo_url) {
         const { data: signed } = await supabase.storage
@@ -754,6 +775,8 @@ function RegisterPage() {
       taluka: form.taluka,
       profession: optionalText(form.profession),
       designation: optionalText(form.designation),
+      designation_level: optionalText(form.designationLevel),
+      designation_area: optionalText(form.designationArea),
       caste_branch: optionalText(form.casteBranch),
       address: form.address.trim(),
       date_of_birth: form.dateOfBirth || null,
@@ -901,6 +924,14 @@ function RegisterPage() {
 
     if (!form.designation.trim()) {
       errors.designation = requiredMessage
+    }
+
+    if (!form.designationLevel) {
+      errors.designationLevel = requiredMessage
+    }
+
+    if (!form.designationArea.trim()) {
+      errors.designationArea = requiredMessage
     }
 
     if (!form.casteBranch.trim()) {
@@ -1183,10 +1214,53 @@ function RegisterPage() {
                 onChange={(event) => updateField('designation', event.target.value)}
                 disabled={locked}
                 className="reg-input"
-                placeholder="Member / Volunteer / Office Bearer"
+                placeholder={t('register.placeholder.designation')}
                 autoComplete="organization-title"
                 aria-invalid={Boolean(fieldErrors.designation)}
                 aria-describedby={getDescriptionIds('designation')}
+              />
+            </Field>
+
+            <Field
+              name="designationLevel"
+              label={t('register.field.designationLevel')}
+              required
+              error={fieldErrors.designationLevel}
+            >
+              <select
+                id="designationLevel"
+                value={form.designationLevel}
+                onChange={(event) => updateField('designationLevel', event.target.value)}
+                disabled={locked}
+                className="reg-input reg-select"
+                aria-invalid={Boolean(fieldErrors.designationLevel)}
+                aria-describedby={getDescriptionIds('designationLevel')}
+              >
+                <option value="">{t('register.placeholder.designationLevel')}</option>
+                {designationLevelOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field
+              name="designationArea"
+              label={t('register.field.designationArea')}
+              required
+              error={fieldErrors.designationArea}
+            >
+              <input
+                id="designationArea"
+                value={form.designationArea}
+                onChange={(event) => updateField('designationArea', event.target.value)}
+                disabled={locked}
+                className="reg-input"
+                placeholder={t('register.placeholder.designationArea')}
+                autoComplete="address-level2"
+                aria-invalid={Boolean(fieldErrors.designationArea)}
+                aria-describedby={getDescriptionIds('designationArea')}
               />
             </Field>
 
@@ -1909,6 +1983,8 @@ function memberToForm(data: ExistingMember): RegisterFormState {
     taluka: data.taluka ?? '',
     profession: data.profession ?? '',
     designation: data.designation ?? '',
+    designationLevel: data.designation_level ?? '',
+    designationArea: data.designation_area ?? '',
     casteBranch: data.caste_branch ?? '',
     address: data.address ?? '',
     dateOfBirth: data.date_of_birth ?? '',
