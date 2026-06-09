@@ -14,6 +14,7 @@ type VerifyResult = {
     member_no: string | null
     full_name: string
     district: string
+    taluka: string | null
     status: 'pending' | 'approved' | 'rejected'
     approved_at: string | null
   } | null
@@ -131,6 +132,7 @@ function VerifyMemberPage() {
                 <Info label="Member Name" value={result.member.full_name} />
                 <Info label="Member No" value={result.member.member_no ?? 'N/A'} />
                 <Info label="District" value={result.member.district} />
+                <Info label="Taluka / Town" value={result.member.taluka} />
                 <Info
                   label="Approved At"
                   value={
@@ -179,13 +181,13 @@ function VerifyMemberPage() {
   )
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+function Info({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
         {label}
       </p>
-      <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-900">{value || 'Not provided'}</p>
     </div>
   )
 }

@@ -39,6 +39,10 @@ const sindhDistricts = [
   'Umerkot',
 ]
 
+const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+
+const genderOptions = ['Male', 'Female', 'Other']
+
 type ExistingMember = {
   id: string
   status: 'pending' | 'approved' | 'rejected'
@@ -47,8 +51,15 @@ type ExistingMember = {
   cnic: string
   mobile: string
   district: string
+  taluka: string | null
+  address: string | null
+  date_of_birth: string | null
+  gender: string | null
+  education: string | null
+  blood_group: string | null
   profession: string | null
   caste_branch: string | null
+  declaration_accepted: boolean
   photo_url: string
 }
 
@@ -67,8 +78,15 @@ function RegisterPage() {
   const [cnic, setCnic] = useState('')
   const [mobile, setMobile] = useState('')
   const [district, setDistrict] = useState('')
+  const [taluka, setTaluka] = useState('')
+  const [address, setAddress] = useState('')
+  const [dateOfBirth, setDateOfBirth] = useState('')
+  const [gender, setGender] = useState('')
+  const [education, setEducation] = useState('')
+  const [bloodGroup, setBloodGroup] = useState('')
   const [profession, setProfession] = useState('')
   const [casteBranch, setCasteBranch] = useState('')
+  const [declarationAccepted, setDeclarationAccepted] = useState(false)
   const [photo, setPhoto] = useState<File | null>(null)
 
   const [error, setError] = useState('')
@@ -94,7 +112,7 @@ function RegisterPage() {
     const { data, error } = await supabase
       .from('members')
       .select(
-        'id, status, full_name, father_name, cnic, mobile, district, profession, caste_branch, photo_url',
+        'id, status, full_name, father_name, cnic, mobile, district, taluka, address, date_of_birth, gender, education, blood_group, profession, caste_branch, declaration_accepted, photo_url',
       )
       .eq('user_id', user.id)
       .maybeSingle()
@@ -112,8 +130,15 @@ function RegisterPage() {
       setCnic(data.cnic)
       setMobile(data.mobile)
       setDistrict(data.district)
+      setTaluka(data.taluka ?? '')
+      setAddress(data.address ?? '')
+      setDateOfBirth(data.date_of_birth ?? '')
+      setGender(data.gender ?? '')
+      setEducation(data.education ?? '')
+      setBloodGroup(data.blood_group ?? '')
       setProfession(data.profession ?? '')
       setCasteBranch(data.caste_branch ?? '')
+      setDeclarationAccepted(data.declaration_accepted)
     }
 
     setLoading(false)
@@ -138,8 +163,28 @@ function RegisterPage() {
       return
     }
 
-    if (!/^[0-9]{5}-[0-9]{7}-[0-9]$/.test(cnic)) {
+    if (!fullName.trim() || !fatherName.trim()) {
+      setError('Full name and father name are required.')
+      return
+    }
+
+    if (!/^[0-9]{5}-[0-9]{7}-[0-9]$/.test(cnic.trim())) {
       setError('CNIC format must be 12345-1234567-1')
+      return
+    }
+
+    if (!district || !taluka.trim()) {
+      setError('District and taluka are required.')
+      return
+    }
+
+    if (!address.trim()) {
+      setError('Address is required.')
+      return
+    }
+
+    if (!declarationAccepted) {
+      setError('Please accept the membership declaration before submitting.')
       return
     }
 
@@ -165,19 +210,28 @@ function RegisterPage() {
       }
     }
 
+    const payload = {
+      full_name: fullName.trim(),
+      father_name: fatherName.trim(),
+      cnic: cnic.trim(),
+      mobile: mobile.trim(),
+      district,
+      taluka: taluka.trim(),
+      address: address.trim(),
+      date_of_birth: dateOfBirth || null,
+      gender: gender || null,
+      education: education.trim() || null,
+      blood_group: bloodGroup || null,
+      profession: profession.trim() || null,
+      caste_branch: casteBranch.trim() || null,
+      declaration_accepted: declarationAccepted,
+      photo_url: photoPath,
+    }
+
     if (existingMember) {
       const { error: updateError } = await supabase
         .from('members')
-        .update({
-          full_name: fullName,
-          father_name: fatherName,
-          cnic,
-          mobile,
-          district,
-          profession: profession || null,
-          caste_branch: casteBranch || null,
-          photo_url: photoPath,
-        })
+        .update(payload)
         .eq('id', existingMember.id)
 
       if (updateError) {
@@ -188,14 +242,7 @@ function RegisterPage() {
     } else {
       const { error: insertError } = await supabase.from('members').insert({
         user_id: userId,
-        full_name: fullName,
-        father_name: fatherName,
-        cnic,
-        mobile,
-        district,
-        profession: profession || null,
-        caste_branch: casteBranch || null,
-        photo_url: photoPath,
+        ...payload,
         status: 'pending',
       })
 
@@ -220,7 +267,7 @@ function RegisterPage() {
     )
   }
 
-  const locked = existingMember?.status === 'approved'
+  const locked = existingMember?.status !== undefined && existingMember.status !== 'pending'
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
@@ -233,7 +280,7 @@ function RegisterPage() {
             Membership Registration
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Submit your profile and photo for admin review.
+            Submit your complete profile, contact details and photo for admin review.
           </p>
         </div>
 
@@ -319,6 +366,69 @@ function RegisterPage() {
               </select>
             </Field>
 
+            <Field label="Taluka / Town">
+              <input
+                value={taluka}
+                onChange={(event) => setTaluka(event.target.value)}
+                disabled={locked}
+                required
+                className="input"
+                placeholder="Enter taluka or town"
+              />
+            </Field>
+
+            <Field label="Date of Birth">
+              <input
+                type="date"
+                value={dateOfBirth}
+                onChange={(event) => setDateOfBirth(event.target.value)}
+                disabled={locked}
+                className="input"
+              />
+            </Field>
+
+            <Field label="Gender">
+              <select
+                value={gender}
+                onChange={(event) => setGender(event.target.value)}
+                disabled={locked}
+                className="input"
+              >
+                <option value="">Select gender</option>
+                {genderOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="Education">
+              <input
+                value={education}
+                onChange={(event) => setEducation(event.target.value)}
+                disabled={locked}
+                className="input"
+                placeholder="Optional"
+              />
+            </Field>
+
+            <Field label="Blood Group">
+              <select
+                value={bloodGroup}
+                onChange={(event) => setBloodGroup(event.target.value)}
+                disabled={locked}
+                className="input"
+              >
+                <option value="">Select blood group</option>
+                {bloodGroups.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
             <Field label="Profession">
               <input
                 value={profession}
@@ -329,13 +439,24 @@ function RegisterPage() {
               />
             </Field>
 
-            <Field label="Caste Branch">
+            <Field label="Caste Branch / Category">
               <input
                 value={casteBranch}
                 onChange={(event) => setCasteBranch(event.target.value)}
                 disabled={locked}
                 className="input"
                 placeholder="Optional"
+              />
+            </Field>
+
+            <Field label="Address">
+              <textarea
+                value={address}
+                onChange={(event) => setAddress(event.target.value)}
+                disabled={locked}
+                required
+                className="input min-h-24 resize-y md:col-span-2"
+                placeholder="Enter complete residential address"
               />
             </Field>
 
@@ -351,10 +472,25 @@ function RegisterPage() {
             </Field>
           </div>
 
+          <label className="flex gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={declarationAccepted}
+              onChange={(event) => setDeclarationAccepted(event.target.checked)}
+              disabled={locked}
+              required
+              className="mt-1 h-4 w-4 shrink-0 accent-emerald-700"
+            />
+            <span>
+              I confirm that the information provided in this membership form is
+              correct and I agree to follow the organization membership rules.
+            </span>
+          </label>
+
           <div className="flex flex-wrap gap-3">
             <button
               type="submit"
-              disabled={submitting || locked || existingMember?.status === 'rejected'}
+              disabled={submitting || locked}
               className="rounded-lg bg-emerald-700 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-60"
             >
               {submitting ? 'Saving...' : existingMember ? 'Update Form' : 'Submit Form'}

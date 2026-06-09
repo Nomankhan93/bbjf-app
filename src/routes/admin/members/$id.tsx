@@ -16,8 +16,15 @@ type Member = {
   cnic: string
   mobile: string
   district: string
+  taluka: string | null
+  address: string | null
+  date_of_birth: string | null
+  gender: string | null
+  education: string | null
+  blood_group: string | null
   profession: string | null
   caste_branch: string | null
+  declaration_accepted: boolean
   photo_url: string
   status: 'pending' | 'approved' | 'rejected'
   rejection_reason: string | null
@@ -183,7 +190,8 @@ function AdminMemberDetailPage() {
                 {member.full_name}
               </h1>
               <p className="mt-1 text-sm text-slate-600">
-                CNIC: {member.cnic} · District: {member.district}
+                CNIC: {member.cnic} · {member.district}
+                {member.taluka ? ` · ${member.taluka}` : ''}
               </p>
             </div>
 
@@ -235,8 +243,17 @@ function AdminMemberDetailPage() {
               <InfoItem label="CNIC" value={member.cnic} />
               <InfoItem label="Mobile" value={member.mobile} />
               <InfoItem label="District" value={member.district} />
+              <InfoItem label="Taluka / Town" value={member.taluka} />
+              <InfoItem label="Date of Birth" value={formatDate(member.date_of_birth)} />
+              <InfoItem label="Gender" value={member.gender} />
+              <InfoItem label="Education" value={member.education} />
+              <InfoItem label="Blood Group" value={member.blood_group} />
               <InfoItem label="Profession" value={member.profession} />
               <InfoItem label="Caste Branch" value={member.caste_branch} />
+              <InfoItem
+                label="Declaration"
+                value={member.declaration_accepted ? 'Accepted' : 'Not accepted'}
+              />
               <InfoItem label="Member No" value={member.member_no} />
               <InfoItem
                 label="Submitted"
@@ -250,6 +267,10 @@ function AdminMemberDetailPage() {
                     : null
                 }
               />
+            </div>
+
+            <div className="mt-6 rounded-xl bg-slate-50 p-4">
+              <InfoItem label="Address" value={member.address} />
             </div>
 
             {member.rejection_reason ? (
@@ -344,4 +365,9 @@ function StatusBadge({
       {status}
     </span>
   )
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return null
+  return new Date(value).toLocaleDateString()
 }

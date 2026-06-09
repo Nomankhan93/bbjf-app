@@ -51,12 +51,18 @@ export type Database = {
       }
       members: {
         Row: {
+          address: string | null
           approved_at: string | null
+          blood_group: string | null
           caste_branch: string | null
           cnic: string
           created_at: string
+          date_of_birth: string | null
+          declaration_accepted: boolean
           district: string
+          education: string | null
           father_name: string
+          gender: string | null
           full_name: string
           id: string
           member_no: string | null
@@ -67,16 +73,23 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["member_status"]
+          taluka: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          address?: string | null
           approved_at?: string | null
+          blood_group?: string | null
           caste_branch?: string | null
           cnic: string
           created_at?: string
+          date_of_birth?: string | null
+          declaration_accepted?: boolean
           district: string
+          education?: string | null
           father_name: string
+          gender?: string | null
           full_name: string
           id?: string
           member_no?: string | null
@@ -87,16 +100,23 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["member_status"]
+          taluka?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          address?: string | null
           approved_at?: string | null
+          blood_group?: string | null
           caste_branch?: string | null
           cnic?: string
           created_at?: string
+          date_of_birth?: string | null
+          declaration_accepted?: boolean
           district?: string
+          education?: string | null
           father_name?: string
+          gender?: string | null
           full_name?: string
           id?: string
           member_no?: string | null
@@ -107,6 +127,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["member_status"]
+          taluka?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -159,12 +180,18 @@ export type Database = {
       approve_member: {
         Args: { _member_id: string; _reviewed_by?: string }
         Returns: {
+          address: string | null
           approved_at: string | null
+          blood_group: string | null
           caste_branch: string | null
           cnic: string
           created_at: string
+          date_of_birth: string | null
+          declaration_accepted: boolean
           district: string
+          education: string | null
           father_name: string
+          gender: string | null
           full_name: string
           id: string
           member_no: string | null
@@ -192,12 +219,18 @@ export type Database = {
           _reviewed_by?: string
         }
         Returns: {
+          address: string | null
           approved_at: string | null
+          blood_group: string | null
           caste_branch: string | null
           cnic: string
           created_at: string
+          date_of_birth: string | null
+          declaration_accepted: boolean
           district: string
+          education: string | null
           father_name: string
+          gender: string | null
           full_name: string
           id: string
           member_no: string | null

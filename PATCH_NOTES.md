@@ -1,15 +1,24 @@
-# BBJF card admin preview patch
+# BBJF Membership Profile Fields Patch
 
-This patch keeps the project as a membership portal only.
+Scope: membership portal only.
 
-## Changes
+## What this patch adds
 
-- Adds reusable `src/components/MembershipCard.tsx`.
-- Updates user `/card` page to use the shared front + back card.
-- Adds admin card preview route: `/admin/members/$id/card`.
-- Adds an `Open Card` button on approved member detail pages.
-- Updates generated TanStack route tree for the new admin card route.
+- Adds membership profile columns through a Supabase migration:
+  - taluka
+  - address
+  - date_of_birth
+  - gender
+  - education
+  - blood_group
+  - declaration_accepted
+- Updates member registration form to collect these fields.
+- Updates dashboard to show the full membership profile.
+- Updates admin list and admin detail pages to show taluka/contact/profile fields.
+- Updates user and admin card preview to include taluka, address and blood group.
+- Updates public verification page to show taluka/town with district.
+- Adds the missing `.input` CSS class used by forms and admin filters.
 
-## No database migration
+## Important
 
-This patch does not add tables, columns, programs, finance, welfare, or organization-management modules.
+Run the Supabase migration before testing the updated app, otherwise the UI will query columns that do not exist yet.

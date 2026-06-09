@@ -12,6 +12,12 @@ export type MembershipCardMember = {
   cnic: string
   mobile: string
   district: string
+  taluka: string | null
+  address: string | null
+  date_of_birth: string | null
+  gender: string | null
+  education: string | null
+  blood_group: string | null
   profession: string | null
   caste_branch: string | null
   photo_url?: string | null
@@ -145,6 +151,8 @@ function CardFront({
               <Info label="CNIC" value={member.cnic} />
               <Info label="Mobile" value={member.mobile} />
               <Info label="District" value={member.district} />
+              <Info label="Taluka / Town" value={member.taluka} />
+              <Info label="Blood Group" value={member.blood_group} />
               <Info label="Profession" value={member.profession} />
               <Info label="Wing / Category" value={member.caste_branch} />
               <Info label="Approved Date" value={formatDate(member.approved_at)} />
@@ -233,6 +241,10 @@ function CardBack({
                 <Info label="CNIC" value={member.cnic} />
                 <Info label="Mobile" value={member.mobile} />
                 <Info label="District" value={member.district} />
+                <Info label="Taluka / Town" value={member.taluka} />
+                <Info label="Address" value={member.address} />
+                <Info label="Date of Birth" value={formatDate(member.date_of_birth)} />
+                <Info label="Blood Group" value={member.blood_group} />
                 <Info label="Profession" value={member.profession} />
                 <Info label="Wing / Category" value={member.caste_branch} />
               </div>
