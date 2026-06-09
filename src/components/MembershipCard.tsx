@@ -80,10 +80,10 @@ function CardFront({
 
   return (
     <section
-      className="overflow-hidden rounded-[1.65rem] border border-slate-900/10 bg-white"
+      className="flex aspect-[16/10] min-h-[640px] flex-col overflow-hidden rounded-[1.65rem] border border-slate-900/10 bg-white md:min-h-0"
       dir={direction}
     >
-      <div className="relative overflow-hidden bg-black p-7 text-white">
+      <div className="relative h-[142px] shrink-0 overflow-hidden bg-black px-7 py-6 text-white">
         <div className="absolute inset-y-0 left-0 w-1/3 bg-red-600" />
         <div className="absolute inset-y-0 left-1/3 w-1/3 bg-black" />
         <div className="absolute inset-y-0 right-0 w-1/3 bg-green-600" />
@@ -95,7 +95,7 @@ function CardFront({
               <img
                 src={brandIconUrl}
                 alt={`${APP_NAME} logo`}
-                className="h-24 w-24 rounded-full border-4 border-white bg-white object-cover shadow-xl"
+                className="h-20 w-20 rounded-full border-4 border-white bg-white object-cover shadow-xl"
               />
             ) : null}
 
@@ -103,10 +103,10 @@ function CardFront({
               <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/85">
                 {APP_NAME}
               </p>
-              <h2 className="mt-2 text-4xl font-black tracking-tight">
+              <h2 className="mt-1 text-4xl font-black tracking-tight">
                 {t('card.digitalMemberId')}
               </h2>
-              <p className="mt-2 text-sm text-white/90">
+              <p className="mt-1 text-sm text-white/90">
                 {t('card.officialVerified')}
               </p>
             </div>
@@ -118,10 +118,10 @@ function CardFront({
         </div>
       </div>
 
-      <div className="relative overflow-hidden bg-white">
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-white">
         <CardWatermark brandIconUrl={brandIconUrl} />
 
-        <div className="relative grid gap-7 p-7 md:grid-cols-[190px_1fr_190px]">
+        <div className="relative grid h-full min-h-0 gap-6 p-6 md:grid-cols-[190px_minmax(0,1fr)_190px]">
           <div className="space-y-3">
             {photoUrl ? (
               <img
@@ -145,9 +145,9 @@ function CardFront({
             </div>
           </div>
 
-          <div className="space-y-5">
+          <div className="min-w-0 space-y-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
                 {t('card.memberName')}
               </p>
               <h3 className="mt-1 text-3xl font-black text-slate-950">
@@ -155,7 +155,7 @@ function CardFront({
               </h3>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2">
               <Info label={t('card.fatherName')} value={member.father_name} />
               <Info label={t('dashboard.designation')} value={member.designation} />
               <Info label={t('dashboard.designationLevel')} value={member.designation_level} />
@@ -207,10 +207,10 @@ function CardBack({
 
   return (
     <section
-      className="overflow-hidden rounded-[1.65rem] border border-slate-900/10 bg-white"
+      className="flex aspect-[16/10] min-h-[640px] flex-col overflow-hidden rounded-[1.65rem] border border-slate-900/10 bg-white md:min-h-0"
       dir={direction}
     >
-      <div className="relative overflow-hidden bg-slate-950 p-7 text-white">
+      <div className="relative h-[142px] shrink-0 overflow-hidden bg-slate-950 px-7 py-6 text-white">
         <div className="absolute inset-y-0 left-0 w-1/3 bg-red-700" />
         <div className="absolute inset-y-0 left-1/3 w-1/3 bg-black" />
         <div className="absolute inset-y-0 right-0 w-1/3 bg-green-700" />
@@ -239,17 +239,17 @@ function CardBack({
         </div>
       </div>
 
-      <div className="relative overflow-hidden bg-white">
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-white">
         <CardWatermark brandIconUrl={brandIconUrl} />
 
-        <div className="relative grid gap-7 p-7 md:grid-cols-[1.3fr_0.7fr]">
-          <div className="space-y-5">
-            <div className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm">
+        <div className="relative grid h-full min-h-0 gap-5 p-5 md:grid-cols-[minmax(0,1.35fr)_minmax(240px,0.65fr)]">
+          <div className="flex h-full min-h-0 flex-col gap-4">
+            <div className="min-h-0 flex-1 overflow-hidden rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm">
               <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-950">
                 {t('card.back.memberInfo')}
               </h3>
 
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="mt-4 grid gap-x-4 gap-y-3 sm:grid-cols-2">
                 <Info label={t('dashboard.fullName')} value={member.full_name} />
                 <Info label={t('card.fatherName')} value={member.father_name} />
                 <Info label={t('card.memberNo')} value={member.member_no} />
@@ -268,12 +268,12 @@ function CardBack({
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <div className="shrink-0 rounded-3xl border border-slate-200 bg-slate-50 p-4">
               <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-950">
                 {t('card.back.terms')}
               </h3>
 
-              <ol className="mt-4 space-y-2 text-sm leading-6 text-slate-700">
+              <ol className="mt-3 space-y-1 text-xs leading-5 text-slate-700">
                 <li>{t('card.back.term1')}</li>
                 <li>{t('card.back.term2')}</li>
                 <li>{t('card.back.term3')}</li>
@@ -282,27 +282,27 @@ function CardBack({
             </div>
           </div>
 
-          <div className="space-y-5">
-            <div className="rounded-3xl border border-slate-200 bg-white/95 p-5 text-center shadow-sm">
+          <div className="flex h-full min-h-0 flex-col gap-4">
+            <div className="shrink-0 rounded-3xl border border-slate-200 bg-white/95 p-4 text-center shadow-sm">
               {qrUrl ? (
                 <img
                   src={qrUrl}
                   alt={t('card.front.qrAlt')}
-                  className="mx-auto h-44 w-44 rounded-xl bg-white p-2"
+                  className="mx-auto h-36 w-36 rounded-xl bg-white p-2"
                 />
               ) : (
-                <div className="mx-auto h-44 w-44 rounded-xl bg-slate-100" />
+                <div className="mx-auto h-36 w-36 rounded-xl bg-slate-100" />
               )}
 
               <p className="mt-3 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
                 {t('card.scanToVerifyTitle')}
               </p>
-              <p className="mt-2 break-all text-xs leading-5 text-slate-600">
+              <p className="mt-2 max-h-10 overflow-hidden break-all text-xs leading-5 text-slate-600">
                 {verifyUrl || t('card.back.verifyUrlUnavailable')}
               </p>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-slate-950 p-5 text-white shadow-sm">
+            <div className="shrink-0 rounded-3xl border border-slate-200 bg-slate-950 p-4 text-white shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">
                 {t('card.back.issuingAuthority')}
               </p>
@@ -311,7 +311,7 @@ function CardBack({
                 {t('card.back.digitalOffice')}
               </p>
 
-              <div className="mt-8 border-t border-white/30 pt-3">
+              <div className="mt-5 border-t border-white/30 pt-3">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">
                   {t('card.back.authorizedSignature')}
                 </p>
@@ -321,7 +321,7 @@ function CardBack({
               </div>
             </div>
 
-            <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-900">
+            <div className="shrink-0 rounded-3xl border border-amber-200 bg-amber-50 p-3 text-[11px] leading-5 text-amber-900">
               {t('card.back.officialNotice')}
             </div>
           </div>
@@ -372,10 +372,10 @@ function Info({
 
   return (
     <div>
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
         {label}
       </p>
-      <p className="mt-1 break-words text-sm font-bold text-slate-950">
+      <p className="mt-1 break-words text-[13px] font-bold leading-snug text-slate-950">
         {value || t('common.notProvided')}
       </p>
     </div>

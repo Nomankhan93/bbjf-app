@@ -1,24 +1,12 @@
-# BBJF card front/back information split patch
-
-## Scope
-Membership portal card layout only.
+# BBJF Card Equal Size Patch
 
 ## Changes
-- Front side now highlights only:
-  - Member Name
-  - Father Name
-  - Designation
-  - Designation Level
-  - Designation Area / Jurisdiction
-  - Approved Date
-  - Status
-- Front side no longer repeats CNIC, mobile, district, taluka, blood group, profession, or wing/category in the main detail grid.
-- Back side keeps the remaining member information.
-- Back side no longer repeats:
-  - Designation
-  - Designation Level
-  - Designation Area / Jurisdiction
-- Status label now uses the actual member status translation instead of hardcoded Approved.
 
-## Changed file
+- Makes the front and back membership card panels use the same fixed visual aspect ratio.
+- Keeps each side as a matching 16:10 card panel inside the same download container.
+- Reduces back-side spacing, QR size and panel padding so the back side fits inside the same card size.
+- Keeps the earlier front/back information split: front shows office/designation summary, back shows remaining member information.
+
+## Changed files
+
 - src/components/MembershipCard.tsx
