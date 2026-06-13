@@ -777,3 +777,94 @@
     }
   }
 
+
+/* BBJF Eye-Catching Design Refresh v8 */
+.reg-page {
+  position: relative;
+  overflow-x: clip;
+  background:
+    radial-gradient(circle at 6% 14%, rgba(185, 28, 28, 0.12), transparent 22rem),
+    radial-gradient(circle at 88% 16%, rgba(27, 94, 59, 0.18), transparent 24rem),
+    radial-gradient(circle at 78% 88%, rgba(176, 138, 62, 0.16), transparent 22rem),
+    linear-gradient(135deg, #fbfdf9 0%, #eef7f1 48%, #fff8ee 100%);
+}
+
+.reg-bg-pattern {
+  opacity: 0.72;
+  background-image:
+    linear-gradient(135deg, rgba(27,94,59,0.08) 1px, transparent 1px),
+    linear-gradient(45deg, rgba(27,94,59,0.05) 1px, transparent 1px),
+    radial-gradient(circle at 50% 50%, rgba(176,138,62,0.05), transparent 42%);
+  background-size: 46px 46px, 46px 46px, 100% 100%;
+}
+
+.reg-card {
+  border-color: rgba(255,255,255,0.78);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,253,249,0.90));
+  box-shadow: 0 34px 110px rgba(15,23,42,0.14), inset 0 1px 0 rgba(255,255,255,0.95);
+  backdrop-filter: blur(18px);
+}
+
+.reg-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 10px;
+  background: linear-gradient(180deg, #b91c1c, #ffffff 44%, #166534);
+  z-index: 2;
+}
+
+.reg-header {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 16%, rgba(27,94,59,0.16), transparent 18rem),
+    linear-gradient(135deg, rgba(255,255,255,0.96), rgba(246,241,230,0.92));
+}
+
+.reg-header::after {
+  content: '';
+  position: absolute;
+  right: -5rem;
+  top: -5rem;
+  width: 15rem;
+  height: 15rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(176,138,62,0.18), transparent 68%);
+}
+
+.reg-header-badge {
+  box-shadow: 0 10px 28px rgba(15,23,42,0.08);
+}
+
+.reg-title {
+  letter-spacing: -0.045em;
+}
+
+.reg-step-tab.is-active {
+  background: linear-gradient(135deg, rgba(238,245,239,0.98), rgba(255,255,255,0.92));
+  box-shadow: 0 14px 36px rgba(27,94,59,0.12);
+}
+
+.reg-section {
+  border-color: rgba(255,255,255,0.78);
+  box-shadow: 0 18px 55px rgba(15,23,42,0.08);
+}
+
+.reg-section-head {
+  background:
+    radial-gradient(circle at 92% 20%, rgba(27,94,59,0.08), transparent 16rem),
+    linear-gradient(135deg, #fffdf9, #f3eee5);
+}
+
+.reg-input:focus,
+.reg-select:focus,
+.reg-textarea:focus {
+  box-shadow: 0 0 0 5px rgba(27,94,59,0.12), 0 14px 34px rgba(15,23,42,0.08);
+}
+
+.reg-primary {
+  background: linear-gradient(135deg, #198754 0%, #0f5c39 58%, #123524 100%);
+  box-shadow: 0 18px 42px rgba(27,94,59,0.28);
+}

@@ -34,55 +34,77 @@ const HOME_SLIDES = [
 
 function HomePage() {
   return (
-    <main className="px-4 py-14">
+    <main className="bbjf-aurora-page px-4 py-10 md:py-14">
       <section className="page-wrap">
-        <div className="island-shell rise-in overflow-hidden rounded-[2rem] p-6 md:p-8 lg:p-10">
-          <div className="grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="p-2 md:p-4">
-              <p className="island-kicker">Bilawal Bhutto Jayala Federation</p>
+        <div className="bbjf-hero-card rise-in relative overflow-hidden rounded-[2.3rem] p-5 md:p-7 lg:p-9">
+          <div className="bbjf-hero-ribbon" />
+          <div className="bbjf-orb bbjf-orb--red" />
+          <div className="bbjf-orb bbjf-orb--green" />
 
-              <h1 className="display-title mt-4 max-w-4xl text-5xl font-bold leading-tight text-[var(--sea-ink)] md:text-7xl">
-                Digital Membership Platform for BBJF
+          <div className="relative z-10 grid items-center gap-9 lg:grid-cols-[0.95fr_1.05fr]">
+            <div className="p-2 md:p-5">
+              <div className="bbjf-brand-stamp">
+                <span className="bbjf-brand-dot" />
+                Bilawal Bhutto Jayala Federation
+              </div>
+
+              <h1 className="mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.055em] text-[var(--sea-ink)] md:text-7xl lg:text-8xl">
+                Digital{' '}
+                <span className="bbjf-gradient-text">Membership</span>{' '}
+                Platform
               </h1>
 
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--sea-ink-soft)]">
-                Register your profile, submit your membership form, wait for admin
-                approval, and receive a digital ID card with QR verification.
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--sea-ink-soft)] md:text-xl">
+                Create your BBJF profile, submit the membership form, get admin
+                approval, and receive a QR-verified digital member card.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-4">
-                <Link
-                  to="/signup"
-                  className="rounded-xl bg-emerald-700 px-6 py-3 text-sm font-semibold text-white no-underline hover:bg-emerald-800"
-                >
+                <Link to="/signup" className="bbjf-action-btn">
                   Become a Member
+                  <span aria-hidden="true">→</span>
                 </Link>
 
-                <Link
-                  to="/login"
-                  className="rounded-xl border border-[var(--line)] bg-white/70 px-6 py-3 text-sm font-semibold text-[var(--sea-ink)] no-underline hover:bg-white"
-                >
+                <Link to="/login" className="bbjf-outline-btn">
                   Login
                 </Link>
               </div>
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                <MiniStat label="Step 01" value="Sign Up" />
+                <MiniStat label="Step 02" value="Admin Review" />
+                <MiniStat label="Step 03" value="Digital Card" />
+              </div>
             </div>
 
-            <HomePhotoSlider />
+            <div className="relative">
+              <div className="bbjf-visual-halo" />
+              <HomePhotoSlider />
+              <div className="bbjf-floating-chip bbjf-floating-chip--top">
+                QR Verified
+              </div>
+              <div className="bbjf-floating-chip bbjf-floating-chip--bottom">
+                Secure Member ID
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="mt-8 grid gap-5 md:grid-cols-3">
           <FeatureCard
+            step="01"
             title="Submit Membership Form"
             text="Members create an account and submit CNIC, district, mobile number, profession, caste branch, and photo."
           />
 
           <FeatureCard
+            step="02"
             title="Admin Review"
             text="Admins review pending applications, approve valid members, or reject with a reason."
           />
 
           <FeatureCard
+            step="03"
             title="QR Verification"
             text="Approved members get a digital card with QR code linking to a public verification page."
           />
@@ -106,8 +128,8 @@ function HomePhotoSlider() {
   const slide = HOME_SLIDES[activeSlide]
 
   return (
-    <div className="relative overflow-hidden rounded-[1.75rem] border border-white/70 bg-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
-      <div className="relative aspect-[4/3] min-h-[320px] sm:min-h-[420px] lg:min-h-[520px]">
+    <div className="bbjf-photo-slider relative overflow-hidden rounded-[2rem] border border-white/50 bg-slate-950 shadow-[0_30px_90px_rgba(15,23,42,0.28)]">
+      <div className="relative aspect-[4/3] min-h-[320px] sm:min-h-[420px] lg:min-h-[540px]">
         {HOME_SLIDES.map((item, index) => (
           <img
             key={item.src}
@@ -121,7 +143,8 @@ function HomePhotoSlider() {
           />
         ))}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/5" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10" />
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-red-600 via-white to-emerald-600" />
         <div className="absolute left-5 right-5 top-5 flex items-center justify-between gap-3">
           <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-extrabold uppercase tracking-[0.22em] text-emerald-900 shadow-sm">
             BBJF
@@ -131,14 +154,14 @@ function HomePhotoSlider() {
           </span>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-5 text-white md:p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-100">
+        <div className="absolute bottom-0 left-0 right-0 p-5 text-white md:p-7">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-100">
             Home Highlights
           </p>
-          <h2 className="mt-2 text-3xl font-extrabold leading-tight md:text-4xl">
+          <h2 className="mt-2 text-3xl font-black leading-tight md:text-5xl">
             {slide.title}
           </h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-white/85 md:text-base">
+          <p className="mt-3 max-w-xl text-sm leading-6 text-white/85 md:text-base">
             {slide.text}
           </p>
 
@@ -150,10 +173,10 @@ function HomePhotoSlider() {
                 aria-label={`Show home slide ${index + 1}`}
                 aria-pressed={index === activeSlide}
                 onClick={() => setActiveSlide(index)}
-                className={`h-2.5 rounded-full transition-all ${
+                className={`h-3 rounded-full transition-all ${
                   index === activeSlide
-                    ? 'w-10 bg-white'
-                    : 'w-2.5 bg-white/45 hover:bg-white/75'
+                    ? 'w-12 bg-white'
+                    : 'w-3 bg-white/45 hover:bg-white/75'
                 }`}
               />
             ))}
@@ -164,10 +187,28 @@ function HomePhotoSlider() {
   )
 }
 
-function FeatureCard({ title, text }: { title: string; text: string }) {
+function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="feature-card rounded-2xl border border-[var(--line)] p-6">
-      <h2 className="text-xl font-bold text-[var(--sea-ink)]">{title}</h2>
+    <div className="bbjf-mini-stat">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  )
+}
+
+function FeatureCard({
+  step,
+  title,
+  text,
+}: {
+  step: string
+  title: string
+  text: string
+}) {
+  return (
+    <div className="bbjf-feature-card feature-card rounded-3xl p-6">
+      <span className="bbjf-feature-step">{step}</span>
+      <h2 className="mt-4 text-xl font-black text-[var(--sea-ink)]">{title}</h2>
       <p className="mt-3 text-sm leading-6 text-[var(--sea-ink-soft)]">
         {text}
       </p>

@@ -121,8 +121,8 @@ function DashboardPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50 px-4 py-10" dir={direction}>
-        <div className="mx-auto max-w-6xl rounded-2xl bg-white p-6 shadow-sm">
+      <main className="bbjf-dashboard-page px-4 py-10" dir={direction}>
+        <div className="mx-auto max-w-6xl rounded-3xl bg-white/90 p-6 shadow-[0_20px_70px_rgba(15,23,42,0.10)] ring-1 ring-white/70">
           <p className="text-slate-600">{t('dashboard.loading')}</p>
         </div>
       </main>
@@ -130,9 +130,9 @@ function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10" dir={direction}>
+    <main className="bbjf-dashboard-page px-4 py-10" dir={direction}>
       <div className="mx-auto max-w-6xl space-y-6">
-        <header className="flex flex-col justify-between gap-4 rounded-2xl bg-white p-6 shadow-sm md:flex-row md:items-center">
+        <header className="bbjf-dashboard-hero flex flex-col justify-between gap-4 rounded-[2rem] p-7 md:flex-row md:items-center">
           <div>
             <p className="text-sm font-semibold text-emerald-700">
               {t('brand.name')}
@@ -149,14 +149,14 @@ function DashboardPage() {
             <button
               type="button"
               onClick={loadDashboard}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100"
+              className="rounded-xl border border-white/60 bg-white/80 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-white"
             >
               {t('dashboard.refresh')}
             </button>
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100"
+              className="rounded-xl border border-white/60 bg-white/80 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-white"
             >
               {t('auth.logout')}
             </button>
@@ -170,7 +170,7 @@ function DashboardPage() {
         ) : null}
 
         {!member ? (
-          <section className="rounded-2xl bg-white p-6 shadow-sm">
+          <section className="bbjf-empty-card rounded-[2rem] p-7">
             <h2 className="text-xl font-bold text-slate-900">
               {t('dashboard.completeRegistrationTitle')}
             </h2>
@@ -180,7 +180,7 @@ function DashboardPage() {
 
             <Link
               to="/register"
-              className="mt-5 inline-flex rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white no-underline hover:bg-emerald-800"
+              className="bbjf-action-btn mt-5"
             >
               {t('dashboard.fillMembershipForm')}
             </Link>
@@ -196,7 +196,7 @@ function DashboardPage() {
             />
 
             <section className="grid gap-6 lg:grid-cols-[1.5fr_0.85fr]">
-              <div className="rounded-2xl bg-white p-6 shadow-sm">
+              <div className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h2 className="text-lg font-bold text-slate-900">
@@ -276,7 +276,7 @@ function DashboardPage() {
               </div>
 
               <aside className="space-y-6">
-                <section className="rounded-2xl bg-white p-6 shadow-sm">
+                <section className="bbjf-empty-card rounded-[2rem] p-7">
                   <h2 className="text-lg font-bold text-slate-900">
                     {t('dashboard.currentStatus')}
                   </h2>
@@ -288,7 +288,7 @@ function DashboardPage() {
                   <StatusNotice member={member} language={language} />
                 </section>
 
-                <section className="rounded-2xl bg-white p-6 shadow-sm">
+                <section className="bbjf-empty-card rounded-[2rem] p-7">
                   <h2 className="text-lg font-bold text-slate-900">
                     {t('dashboard.nextSteps')}
                   </h2>
