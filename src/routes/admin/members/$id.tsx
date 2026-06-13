@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { AdminShell } from '../../../components/admin/AdminShell'
 import { approveMemberAction, rejectMemberAction } from '../../../lib/admin/actions'
 import { useI18n, type TranslationKey } from '../../../lib/i18n'
 import { supabase } from '../../../lib/supabase/client'
@@ -166,27 +167,27 @@ function AdminMemberDetailPage() {
 
   if (loading) {
     return (
-      <main className="px-4 py-10" dir={direction}>
-        <div className="page-wrap rounded-2xl bg-white p-6 shadow-sm">
+      <AdminShell title={t('admin.detail.memberDetails')} subtitle={t('admin.description')}>
+        <div className="rounded-2xl bg-white p-6 shadow-sm" dir={direction}>
           {t('admin.detail.loading')}
         </div>
-      </main>
+      </AdminShell>
     )
   }
 
   if (!member) {
     return (
-      <main className="px-4 py-10" dir={direction}>
-        <div className="page-wrap rounded-2xl bg-white p-6 shadow-sm">
+      <AdminShell title={t('admin.detail.memberDetails')} subtitle={t('admin.description')}>
+        <div className="rounded-2xl bg-white p-6 shadow-sm" dir={direction}>
           {t('common.memberNotFound')}
         </div>
-      </main>
+      </AdminShell>
     )
   }
 
   return (
-    <main className="px-4 py-10" dir={direction}>
-      <div className="page-wrap space-y-6">
+    <AdminShell title={member.full_name} subtitle={t('admin.detail.memberDetails')}>
+      <div className="space-y-6" dir={direction}>
         <header className="rounded-2xl bg-white p-6 shadow-sm">
           <Link
             to="/admin"
@@ -334,7 +335,7 @@ function AdminMemberDetailPage() {
           </section>
         ) : null}
       </div>
-    </main>
+    </AdminShell>
   )
 }
 

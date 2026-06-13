@@ -1,15 +1,18 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { toPng } from 'html-to-image'
-import QRCode from 'qrcode'
 import { useEffect, useRef, useState } from 'react'
+import { AdminShell } from '../../../../components/admin/AdminShell'
 import {
   APP_SHORT_NAME,
   BBJF_ICON_PATH,
+  CARD_EXPORT_HEIGHT,
+  CARD_EXPORT_WIDTH,
   MembershipCard,
   type MembershipCardMember,
   imageUrlToDataUrl,
 } from '../../../../components/MembershipCard'
 import { useI18n, type TranslationKey } from '../../../../lib/i18n'
+import { exportElementAsPng } from '../../../../lib/shared/card-export'
+import { generateQrDataUrl } from '../../../../lib/shared/qrcode'
 import { supabase } from '../../../../lib/supabase/client'
 
 export const Route = createFileRoute('/admin/members/$id/card')({
@@ -23,6 +26,8 @@ type Member = MembershipCardMember & {
   created_at: string
 }
 
+type DownloadTarget = 'front' | 'back' | 'both'
+
 const statusLabelKeys: Record<Member['status'], TranslationKey> = {
   pending: 'common.status.pending',
   approved: 'common.status.approved',
@@ -34,9 +39,12 @@ function AdminMemberCardPage() {
   const navigate = useNavigate()
   const { t, direction } = useI18n()
   const cardRef = useRef<HTMLDivElement>(null)
+  const frontCardRef = useRef<HTMLElement>(null)
+  const backCardRef = useRef<HTMLElement>(null)
 
   const [loading, setLoading] = useState(true)
-  const [downloading, setDownloading] = useState(false)
+  const [downloading, setDownloading] = useState<DownloadTarget | null>(null)
+  const [linkCopied, setLinkCopied] = useState(false)
   const [member, setMember] = useState<Member | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [brandIconUrl, setBrandIconUrl] = useState<string | null>(null)
@@ -45,7 +53,7 @@ function AdminMemberCardPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    loadMemberCard()
+    void loadMemberCard()
   }, [id])
 
   async function loadMemberCard() {
@@ -118,54 +126,78 @@ function AdminMemberCardPage() {
     setLoading(false)
   }
 
-  async function handleDownload() {
-    if (!cardRef.current || !member?.member_no) return
+  async function handleDownload(target: DownloadTarget) {
+    if (!member?.member_no) return
 
-    setDownloading(true)
+    const exportTarget =
+      target === 'front'
+        ? frontCardRef.current
+        : target === 'back'
+          ? backCardRef.current
+          : cardRef.current
+
+    if (!exportTarget) return
+
+    setDownloading(target)
     setError('')
 
     try {
-      const dataUrl = await toPng(cardRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        fontEmbedCSS: '',
-      })
-
-      const link = document.createElement('a')
-      link.download = `${member.member_no}-${APP_SHORT_NAME}-admin-front-back-card.png`
-      link.href = dataUrl
-      link.click()
+      const suffix = target === 'both' ? 'front-back-card' : `${target}-card`
+      await exportElementAsPng(
+        exportTarget,
+        `${member.member_no}-${APP_SHORT_NAME}-admin-${suffix}.png`,
+        target === 'both'
+          ? undefined
+          : {
+              width: CARD_EXPORT_WIDTH,
+              height: CARD_EXPORT_HEIGHT,
+              canvasWidth: CARD_EXPORT_WIDTH * 2,
+              canvasHeight: CARD_EXPORT_HEIGHT * 2,
+              pixelRatio: 2,
+            },
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : t('card.downloadError'))
     } finally {
-      setDownloading(false)
+      setDownloading(null)
+    }
+  }
+
+  async function handleCopyVerificationLink() {
+    if (!verifyUrl) return
+
+    try {
+      await navigator.clipboard.writeText(verifyUrl)
+      setLinkCopied(true)
+      window.setTimeout(() => setLinkCopied(false), 1600)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to copy link.')
     }
   }
 
   if (loading) {
     return (
-      <main className="px-4 py-10" dir={direction}>
-        <div className="page-wrap rounded-2xl bg-white p-6 shadow-sm">
+      <AdminShell title={t('admin.card.title')} subtitle={t('admin.card.loading')}>
+        <div className="rounded-2xl bg-white p-6 shadow-sm" dir={direction}>
           {t('admin.card.loading')}
         </div>
-      </main>
+      </AdminShell>
     )
   }
 
   if (!member) {
     return (
-      <main className="px-4 py-10" dir={direction}>
-        <div className="page-wrap rounded-2xl bg-white p-6 shadow-sm">
+      <AdminShell title={t('admin.card.title')} subtitle={t('admin.card.onlyApproved')}>
+        <div className="rounded-2xl bg-white p-6 shadow-sm" dir={direction}>
           {t('common.memberNotFound')}
         </div>
-      </main>
+      </AdminShell>
     )
   }
 
   return (
-    <main className="px-4 py-10" dir={direction}>
-      <div className="page-wrap space-y-6">
+    <AdminShell title={t('admin.card.title')} subtitle={member.full_name}>
+      <div className="space-y-6" dir={direction}>
         <header className="rounded-2xl bg-white p-6 shadow-sm">
           <div className="flex flex-wrap gap-3 text-sm font-medium">
             <Link to="/admin" className="text-emerald-700 no-underline">
@@ -204,25 +236,61 @@ function AdminMemberCardPage() {
 
         {member.status === 'approved' && member.member_no ? (
           <>
-            <section className="flex justify-center">
-              <MembershipCard
-                ref={cardRef}
-                member={member}
-                photoUrl={photoUrl}
-                brandIconUrl={brandIconUrl}
-                qrUrl={qrUrl}
-                verifyUrl={verifyUrl}
-              />
+            <section className="overflow-x-auto pb-3">
+              <div className="min-w-[1048px]">
+                <MembershipCard
+                  ref={cardRef}
+                  frontRef={frontCardRef}
+                  backRef={backCardRef}
+                  member={member}
+                  photoUrl={photoUrl}
+                  brandIconUrl={brandIconUrl}
+                  qrUrl={qrUrl}
+                  verifyUrl={verifyUrl}
+                />
+              </div>
             </section>
 
             <div className="flex flex-wrap justify-center gap-3">
               <button
                 type="button"
-                onClick={handleDownload}
-                disabled={downloading}
+                onClick={() => void handleDownload('front')}
+                disabled={Boolean(downloading)}
                 className="rounded-lg bg-slate-950 px-5 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-60"
               >
-                {downloading ? t('common.downloading') : t('common.downloadFrontBackPng')}
+                {downloading === 'front'
+                  ? t('common.downloading')
+                  : t('common.downloadFrontPng')}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleDownload('back')}
+                disabled={Boolean(downloading)}
+                className="rounded-lg bg-slate-950 px-5 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-60"
+              >
+                {downloading === 'back'
+                  ? t('common.downloading')
+                  : t('common.downloadBackPng')}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleDownload('both')}
+                disabled={Boolean(downloading)}
+                className="rounded-lg bg-slate-950 px-5 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-60"
+              >
+                {downloading === 'both'
+                  ? t('common.downloading')
+                  : t('common.downloadFrontBackPng')}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleCopyVerificationLink()}
+                className="rounded-lg border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                {linkCopied ? t('common.copied') : t('common.copyVerificationLink')}
               </button>
 
               <Link
@@ -236,7 +304,7 @@ function AdminMemberCardPage() {
           </>
         ) : null}
       </div>
-    </main>
+    </AdminShell>
   )
 }
 
@@ -246,7 +314,7 @@ function createPublicVerifyUrl(memberNo: string) {
 }
 
 async function createQrDataUrl(value: string) {
-  return QRCode.toDataURL(value, {
+  return generateQrDataUrl(value, {
     width: 280,
     margin: 1,
     color: {
