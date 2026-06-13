@@ -18,6 +18,8 @@ function SignupPage() {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -204,35 +206,27 @@ function SignupPage() {
             </div>
           )}
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              {t('authPage.common.password')}
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              minLength={6}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-600"
-              placeholder={t('signup.password.placeholder')}
-            />
-          </div>
+          <PasswordInput
+            id="signup-password"
+            label={t('authPage.common.password')}
+            value={password}
+            onChange={setPassword}
+            visible={showPassword}
+            onToggle={() => setShowPassword((value) => !value)}
+            placeholder={t('signup.password.placeholder')}
+            autoComplete="new-password"
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              {t('authPage.common.confirmPassword')}
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              required
-              minLength={6}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-600"
-              placeholder={t('signup.confirmPassword.placeholder')}
-            />
-          </div>
+          <PasswordInput
+            id="signup-confirm-password"
+            label={t('authPage.common.confirmPassword')}
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+            visible={showConfirmPassword}
+            onToggle={() => setShowConfirmPassword((value) => !value)}
+            placeholder={t('signup.confirmPassword.placeholder')}
+            autoComplete="new-password"
+          />
 
           {error ? (
             <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
@@ -261,6 +255,96 @@ function SignupPage() {
         </p>
       </div>
     </main>
+  )
+}
+
+function PasswordInput({
+  id,
+  label,
+  value,
+  onChange,
+  visible,
+  onToggle,
+  placeholder,
+  autoComplete,
+}: {
+  id: string
+  label: string
+  value: string
+  onChange: (value: string) => void
+  visible: boolean
+  onToggle: () => void
+  placeholder: string
+  autoComplete: string
+}) {
+  const visibilityLabel = visible ? 'Hide password' : 'Show password'
+
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-slate-700">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          id={id}
+          type={visible ? 'text' : 'password'}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          required
+          minLength={6}
+          autoComplete={autoComplete}
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-11 outline-none focus:border-emerald-600"
+          placeholder={placeholder}
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+          aria-label={visibilityLabel}
+          title={visibilityLabel}
+        >
+          <PasswordVisibilityIcon visible={visible} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function PasswordVisibilityIcon({ visible }: { visible: boolean }) {
+  if (visible) {
+    return (
+      <svg
+        aria-hidden="true"
+        className="h-5 w-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M3 3l18 18" />
+        <path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c5 0 9 4.5 10.5 7a13 13 0 0 1-2.5 3.3" />
+        <path d="M6.6 6.7A13.7 13.7 0 0 0 1.5 12c1.5 2.5 5.5 7 10.5 7a10.6 10.6 0 0 0 4.1-.8" />
+        <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
   )
 }
 
