@@ -1609,8 +1609,8 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
   return (
     <div
       dir="ltr"
-      className={`inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-white/90 p-1 shadow-sm ${
-        compact ? 'w-full justify-between' : ''
+      className={`language-switcher inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-white/90 p-1 shadow-sm ${
+        compact ? 'language-switcher--compact justify-between' : ''
       }`}
       aria-label={t('language.switchTo')}
     >
@@ -1628,7 +1628,7 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
             key={item.code}
             type="button"
             onClick={() => setLanguage(item.code)}
-            className={`min-h-9 rounded-xl px-3 text-xs font-black transition ${
+            className={`language-switcher-button min-h-9 rounded-xl px-3 text-xs font-black transition ${
               active
                 ? 'bg-emerald-900 text-white shadow-sm'
                 : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-900'

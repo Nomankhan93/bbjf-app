@@ -21,6 +21,9 @@ export const Route = createFileRoute('/card')({
 type Member = MembershipCardMember
 type DownloadTarget = 'front' | 'back' | 'both'
 
+const CARD_STACK_PREVIEW_WIDTH = CARD_EXPORT_WIDTH + 32
+const CARD_STACK_PREVIEW_HEIGHT = CARD_EXPORT_HEIGHT * 2 + 20 + 32
+
 function CardPage() {
   const navigate = useNavigate()
   const { t, direction } = useI18n()
@@ -37,9 +40,24 @@ function CardPage() {
   const [qrUrl, setQrUrl] = useState<string | null>(null)
   const [verifyUrl, setVerifyUrl] = useState('')
   const [error, setError] = useState('')
+  const [previewScale, setPreviewScale] = useState(1)
 
   useEffect(() => {
     void loadCard()
+  }, [])
+
+  useEffect(() => {
+    function updatePreviewScale() {
+      if (typeof window === 'undefined') return
+
+      const availableWidth = Math.max(280, window.innerWidth - 32)
+      setPreviewScale(Math.min(1, availableWidth / CARD_STACK_PREVIEW_WIDTH))
+    }
+
+    updatePreviewScale()
+    window.addEventListener('resize', updatePreviewScale)
+
+    return () => window.removeEventListener('resize', updatePreviewScale)
   }, [])
 
   async function loadCard() {
@@ -192,18 +210,29 @@ function CardPage() {
 
         {member?.status === 'approved' && member.member_no ? (
           <>
-            <section className="overflow-x-auto pb-3">
-              <div className="min-w-[1048px]">
-                <MembershipCard
-                  ref={cardRef}
-                  frontRef={frontCardRef}
-                  backRef={backCardRef}
-                  member={member}
-                  photoUrl={photoUrl}
-                  brandIconUrl={brandIconUrl}
-                  qrUrl={qrUrl}
-                  verifyUrl={verifyUrl}
-                />
+            <section className="card-preview-shell pb-3">
+              <div
+                className="card-preview-viewport"
+                style={{ height: CARD_STACK_PREVIEW_HEIGHT * previewScale }}
+              >
+                <div
+                  className="card-preview-scale"
+                  style={{
+                    width: CARD_STACK_PREVIEW_WIDTH,
+                    transform: `scale(${previewScale})`,
+                  }}
+                >
+                  <MembershipCard
+                    ref={cardRef}
+                    frontRef={frontCardRef}
+                    backRef={backCardRef}
+                    member={member}
+                    photoUrl={photoUrl}
+                    brandIconUrl={brandIconUrl}
+                    qrUrl={qrUrl}
+                    verifyUrl={verifyUrl}
+                  />
+                </div>
               </div>
             </section>
 

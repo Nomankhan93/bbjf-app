@@ -132,7 +132,7 @@ function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--header-bg)] backdrop-blur-md">
+    <header className="site-header sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--header-bg)] backdrop-blur-md">
       <div className="page-wrap flex min-h-20 items-center justify-between gap-4">
         <Link to="/" className="brand-pill">
           <img
@@ -174,19 +174,19 @@ function SiteHeader() {
           <LanguageSwitcher />
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="mobile-header-actions flex items-center gap-2 md:hidden">
           <LanguageSwitcher compact />
           {isLoggedIn ? (
             <>
               <Link
                 to="/card"
-                className="rounded-xl bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white no-underline"
+                className="mobile-header-action mobile-header-action--primary rounded-xl bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white no-underline"
               >
                 {t('nav.digitalCard')}
               </Link>
               <button
                 type="button"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm"
+                className="mobile-header-action rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm"
                 onClick={handleLogout}
                 disabled={isLoggingOut}
               >
@@ -196,7 +196,7 @@ function SiteHeader() {
           ) : (
             <Link
               to="/login"
-              className="rounded-xl bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white no-underline"
+              className="mobile-header-action mobile-header-action--primary rounded-xl bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white no-underline"
             >
               {t('auth.login')}
             </Link>
