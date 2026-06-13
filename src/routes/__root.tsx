@@ -13,6 +13,7 @@ import {
   useI18n,
 } from '../lib/i18n'
 import { useAuthRole } from '../hooks/useAuthRole'
+import { InstallAppPrompt } from '../components/pwa/InstallAppPrompt'
 import styles from '../styles.css?url'
 
 const APP_NAME = 'Bilawal Bhutto Jayala Federation'
@@ -34,6 +35,9 @@ export const Route = createRootRoute({
       { name: 'theme-color', content: '#000000' },
       { name: 'application-name', content: `${APP_NAME} - ${APP_SHORT_NAME}` },
       { name: 'apple-mobile-web-app-title', content: APP_SHORT_NAME },
+      { name: 'apple-mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+      { name: 'mobile-web-app-capable', content: 'yes' },
       { name: 'msapplication-TileColor', content: '#000000' },
       { property: 'og:title', content: APP_FULL_TITLE },
       {
@@ -72,6 +76,7 @@ function RootComponent() {
       <SiteHeader />
       <Outlet />
       <SiteFooter />
+      <InstallAppPrompt />
 
       {import.meta.env.DEV ? (
         <TanStackRouterDevtools position="bottom-right" />
