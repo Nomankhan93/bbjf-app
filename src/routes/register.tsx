@@ -686,8 +686,6 @@ function RegisterPage() {
       photo_url: photoPath,
     }
 
-    let savedMemberId = existingMember?.id ?? ''
-
     if (existingMember) {
       const updatePayload =
         existingMember.status === 'rejected'
@@ -709,23 +707,19 @@ function RegisterPage() {
         return
       }
     } else {
-      const { data: insertedMember, error: insertError } = await (supabase as any)
+      const { error: insertError } = await (supabase as any)
         .from('members')
         .insert({
           user_id: userId,
           ...payload,
           status: 'pending',
         })
-        .select('id, user_id')
-        .single()
 
       if (insertError) {
         setError(insertError.message)
         setSubmitting(false)
         return
       }
-
-      savedMemberId = insertedMember.id
     }
 
     localStorage.removeItem(draftKey(userId))

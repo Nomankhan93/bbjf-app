@@ -12,6 +12,7 @@ import {
   LanguageSwitcher,
   useI18n,
 } from '../lib/i18n'
+import { useAuthRole } from '../hooks/useAuthRole'
 import styles from '../styles.css?url'
 
 const APP_NAME = 'Bilawal Bhutto Jayala Federation'
@@ -110,6 +111,7 @@ function I18nShell({ children }: { children: ReactNode }) {
 
 function SiteHeader() {
   const { t } = useI18n()
+  const { isLoggedIn, isAdmin } = useAuthRole()
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--header-bg)] backdrop-blur-md">
@@ -127,11 +129,18 @@ function SiteHeader() {
 
         <nav className="hidden items-center gap-6 md:flex">
           <NavLink to="/">{t('nav.home')}</NavLink>
-          <NavLink to="/signup">{t('auth.joinNow')}</NavLink>
-          <NavLink to="/login">{t('auth.login')}</NavLink>
-          <NavLink to="/dashboard">{t('nav.dashboard')}</NavLink>
-          <NavLink to="/register">{t('nav.register')}</NavLink>
-          <NavLink to="/admin">{t('nav.admin')}</NavLink>
+          {isLoggedIn ? (
+            <>
+              <NavLink to="/dashboard">{t('nav.dashboard')}</NavLink>
+              <NavLink to="/register">{t('nav.register')}</NavLink>
+              {isAdmin ? <NavLink to="/admin">{t('nav.admin')}</NavLink> : null}
+            </>
+          ) : (
+            <>
+              <NavLink to="/signup">{t('auth.joinNow')}</NavLink>
+              <NavLink to="/login">{t('auth.login')}</NavLink>
+            </>
+          )}
         </nav>
 
         <div className="hidden md:block">
@@ -141,10 +150,10 @@ function SiteHeader() {
         <div className="flex items-center gap-2 md:hidden">
           <LanguageSwitcher compact />
           <Link
-            to="/dashboard"
+            to={isLoggedIn ? '/dashboard' : '/login'}
             className="rounded-xl bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white no-underline"
           >
-            {t('nav.dashboard')}
+            {isLoggedIn ? t('nav.dashboard') : t('auth.login')}
           </Link>
         </div>
       </div>

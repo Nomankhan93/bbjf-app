@@ -1,202 +1,117 @@
-Welcome to your new TanStack Start app! 
+# BBJF Membership Portal
 
-# Getting Started
+Bilawal Bhutto Jayala Federation (BBJF) digital membership portal built with TanStack Start, React, TypeScript, Tailwind CSS, and Supabase.
 
-To run this application:
+## Scope
+
+This app is a membership portal only. It includes:
+
+- Member signup and login
+- Membership registration form
+- Admin approval/rejection workflow
+- Member dashboard
+- Digital membership card with QR verification
+- Public verification page
+- Admin member management
+
+Payment collection is intentionally disabled in the BBJF app. Do not re-enable payment tables, receipt uploads, or payment UI unless BBJF explicitly approves a new payment workflow.
+
+## Tech Stack
+
+- TanStack Start / TanStack Router
+- React 19 + TypeScript
+- Tailwind CSS
+- Supabase Auth, Database, Storage, and RLS
+- `html-to-image` for card export
+- `qrcode` for QR generation
+
+## Environment Variables
+
+Create `.env.local` locally from `.env.example`:
+
+```bash
+cp .env.example .env.local
+```
+
+Required values:
+
+```bash
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-public-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-server-only-service-role-key
+```
+
+Never commit or share `.env.local`. If a ZIP containing `.env.local` was shared, rotate the Supabase service role key.
+
+## Local Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-# Building For Production
-
-To build this application for production:
+## Quality Checks
 
 ```bash
+npm run check
 npm run build
-```
-
-## Testing
-
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
-
-```bash
 npm run test
 ```
 
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `npm install @tailwindcss/vite tailwindcss -D`
-
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+Full verification:
 
 ```bash
-pnpm dlx shadcn@latest add button
+npm run verify:project
 ```
 
+## Supabase Migrations
 
+Run migrations locally with Supabase CLI, or apply them in Supabase Cloud SQL editor in order.
 
-## Routing
+Important latest migration:
 
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
+```txt
+supabase/migrations/20260613120000_bbjf_constraints_and_payment_cleanup.sql
 ```
 
-Then anywhere in your JSX you can use it like so:
+It fixes district/gender constraint mismatch and disables deprecated payment access.
 
-```tsx
-<Link to="/about">About</Link>
+## Admin Setup
+
+Create a user through Supabase Auth, then grant the admin role:
+
+```sql
+insert into public.user_roles (user_id, role)
+values ('AUTH_USER_UUID_HERE'::uuid, 'admin')
+on conflict do nothing;
 ```
 
-This will create a link that will navigate to the `/about` route.
+## Safe ZIP Export
 
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
+Use this command when sharing the project:
 
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
+```bash
+npm run safe-export
 ```
 
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
+It excludes secrets, local Supabase state, dependencies, build output, logs, and previous ZIP files.
 
-## Server Functions
+To verify an exported ZIP:
 
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
+```bash
+bash scripts/check-safe-archive.sh exports/bbjf-app-safe-YYYYMMDD-HHMMSS.zip
 ```
 
-## API Routes
+## Key Routes
 
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
+```txt
+/                  Public home
+/signup            Account registration
+/login             Login
+/register          Membership form
+/dashboard         Member dashboard
+/card              Digital card
+/verify/$memberNo  Public QR verification
+/admin             Admin members panel
+/admin/members/$id Admin member detail
 ```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).

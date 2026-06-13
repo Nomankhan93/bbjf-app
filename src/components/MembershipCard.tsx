@@ -1,9 +1,16 @@
-import { forwardRef } from 'react'
+import { forwardRef, type CSSProperties, type Ref } from 'react'
 import { useI18n } from '../lib/i18n'
 
 export const APP_NAME = 'Bilawal Bhutto Jayala Federation'
 export const APP_SHORT_NAME = 'BBJF'
 export const BBJF_ICON_PATH = '/bbjf-icon-512.png'
+export const CARD_EXPORT_WIDTH = 1016
+export const CARD_EXPORT_HEIGHT = 638
+
+const CARD_SIDE_STYLE: CSSProperties = {
+  width: CARD_EXPORT_WIDTH,
+  height: CARD_EXPORT_HEIGHT,
+}
 
 export type MembershipCardMember = {
   id: string
@@ -35,11 +42,13 @@ type MembershipCardProps = {
   brandIconUrl: string | null
   qrUrl: string | null
   verifyUrl: string
+  frontRef?: Ref<HTMLElement>
+  backRef?: Ref<HTMLElement>
 }
 
 export const MembershipCard = forwardRef<HTMLDivElement, MembershipCardProps>(
   function MembershipCard(
-    { member, photoUrl, brandIconUrl, qrUrl, verifyUrl },
+    { member, photoUrl, brandIconUrl, qrUrl, verifyUrl, frontRef, backRef },
     ref,
   ) {
     return (
@@ -48,6 +57,7 @@ export const MembershipCard = forwardRef<HTMLDivElement, MembershipCardProps>(
         className="mx-auto w-full max-w-5xl space-y-5 rounded-[2rem] bg-white p-4 shadow-2xl ring-1 ring-slate-200"
       >
         <CardFront
+          ref={frontRef}
           member={member}
           photoUrl={photoUrl}
           brandIconUrl={brandIconUrl}
@@ -56,6 +66,7 @@ export const MembershipCard = forwardRef<HTMLDivElement, MembershipCardProps>(
         />
 
         <CardBack
+          ref={backRef}
           member={member}
           brandIconUrl={brandIconUrl}
           qrUrl={qrUrl}
@@ -66,25 +77,24 @@ export const MembershipCard = forwardRef<HTMLDivElement, MembershipCardProps>(
   },
 )
 
-function CardFront({
-  member,
-  photoUrl,
-  brandIconUrl,
-  qrUrl,
-  verifyUrl,
-}: {
+const CardFront = forwardRef<HTMLElement, {
   member: MembershipCardMember
   photoUrl: string | null
   brandIconUrl: string | null
   qrUrl: string | null
   verifyUrl: string
-}) {
+}>(function CardFront(
+  { member, photoUrl, brandIconUrl, qrUrl, verifyUrl },
+  ref,
+) {
   const { t, direction, language } = useI18n()
 
   return (
     <section
+      ref={ref}
       className="relative isolate overflow-hidden rounded-[1.75rem] border border-slate-900/10 bg-white shadow-xl"
       dir={direction}
+      style={CARD_SIDE_STYLE}
     >
       <CardWatermark brandIconUrl={brandIconUrl} />
 
@@ -158,8 +168,6 @@ function CardFront({
             <Info label={t('dashboard.designation')} value={member.designation} />
             <Info label={t('dashboard.designationLevel')} value={member.designation_level} />
             <Info label={t('dashboard.designationArea')} value={member.designation_area} />
-            <Info label={t('dashboard.district')} value={member.district} />
-            <Info label={t('card.talukaTown')} value={member.taluka} />
             <Info
               label={t('card.approvedDate')}
               value={formatDate(member.approved_at, language)}
@@ -202,25 +210,25 @@ function CardFront({
       </div>
     </section>
   )
-}
+})
 
-function CardBack({
-  member,
-  brandIconUrl,
-  qrUrl,
-  verifyUrl,
-}: {
+const CardBack = forwardRef<HTMLElement, {
   member: MembershipCardMember
   brandIconUrl: string | null
   qrUrl: string | null
   verifyUrl: string
-}) {
+}>(function CardBack(
+  { member, brandIconUrl, qrUrl, verifyUrl },
+  ref,
+) {
   const { t, direction, language } = useI18n()
 
   return (
     <section
+      ref={ref}
       className="relative isolate overflow-hidden rounded-[1.75rem] border border-slate-900/10 bg-white shadow-xl"
       dir={direction}
+      style={CARD_SIDE_STYLE}
     >
       <CardWatermark brandIconUrl={brandIconUrl} />
 
@@ -253,8 +261,6 @@ function CardBack({
             </h3>
 
             <div className="mt-4 grid gap-x-5 gap-y-3 sm:grid-cols-3">
-              <Info label={t('dashboard.fullName')} value={member.full_name} />
-              <Info label={t('card.fatherName')} value={member.father_name} />
               <Info label={t('card.memberNo')} value={member.member_no} />
               <Info label={t('dashboard.cnic')} value={formatCnic(member.cnic)} />
               <Info label={t('card.mobile')} value={formatMobile(member.mobile)} />
@@ -267,7 +273,6 @@ function CardBack({
               <Info label={t('dashboard.bloodGroup')} value={member.blood_group} />
               <Info label={t('dashboard.profession')} value={member.profession} />
               <Info label={t('card.wingCategory')} value={member.caste_branch} />
-              <Info label={t('admin.table.status')} value={statusLabel(member.status, t)} />
             </div>
           </section>
 
@@ -340,7 +345,7 @@ function CardBack({
       </div>
     </section>
   )
-}
+})
 
 function FlagStripes() {
   return (

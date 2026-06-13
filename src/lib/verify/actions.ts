@@ -1,5 +1,10 @@
 import { createServerFn } from '@tanstack/react-start'
 import { createSupabaseAdminClient } from '../supabase/admin'
+import {
+  buildPublicVerifyPayload,
+  canExposeMemberPhoto,
+  type VerifyMemberRow,
+} from './public-member'
 
 type VerifyMemberInput = {
   memberNo: string
@@ -30,18 +35,10 @@ export const verifyMemberAction = createServerFn({ method: 'POST' })
       throw new Error(error.message)
     }
 
-    if (!member) {
-      return {
-        found: false,
-        verified: false,
-        member: null,
-        photoSignedUrl: null,
-      }
-    }
-
+    const publicPayload = buildPublicVerifyPayload(member as VerifyMemberRow | null)
     let photoSignedUrl: string | null = null
 
-    if (member.photo_url) {
+    if (canExposeMemberPhoto(member as VerifyMemberRow | null) && member?.photo_url) {
       const { data: signed } = await supabaseAdmin.storage
         .from('member-photos')
         .createSignedUrl(member.photo_url, 60 * 10)
@@ -50,20 +47,7 @@ export const verifyMemberAction = createServerFn({ method: 'POST' })
     }
 
     return {
-      found: true,
-      verified: member.status === 'approved',
-      member: {
-        id: member.id,
-        member_no: member.member_no,
-        full_name: member.full_name,
-        district: member.district,
-        taluka: member.taluka,
-        designation: member.designation,
-        designation_level: member.designation_level,
-        designation_area: member.designation_area,
-        status: member.status,
-        approved_at: member.approved_at,
-      },
+      ...publicPayload,
       photoSignedUrl,
     }
   })
