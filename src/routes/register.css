@@ -671,47 +671,8 @@
   }
 
   .reg-card,
-  .reg-section,
-  .reg-payment-panel {
+  .reg-section {
     min-width: 0;
-  }
-
-  .reg-payment-panel {
-    overflow: hidden;
-  }
-
-  .reg-payment-title,
-  .reg-payment-instruction,
-  .reg-payment-detail p,
-  .reg-payment-qr p {
-    overflow-wrap: anywhere;
-  }
-
-  .reg-payment-details {
-    min-width: 0;
-  }
-
-  .reg-payment-detail {
-    min-width: 0;
-    border-radius: 0.9rem;
-  }
-
-  .reg-payment-detail p:last-child {
-    unicode-bidi: plaintext;
-  }
-
-  .reg-payment-qr {
-    min-width: 0;
-  }
-
-  .reg-payment-qr-img {
-    max-height: 320px;
-  }
-
-  .reg-payment-upload {
-    width: min(100%, 340px);
-    max-width: 100%;
-    justify-content: center;
   }
 
   .reg-page[dir="rtl"] {
@@ -721,8 +682,7 @@
   .reg-page[dir="rtl"] .reg-header,
   .reg-page[dir="rtl"] .reg-section-header,
   .reg-page[dir="rtl"] .reg-field,
-  .reg-page[dir="rtl"] .reg-banner,
-  .reg-page[dir="rtl"] .reg-payment-panel {
+  .reg-page[dir="rtl"] .reg-banner {
     text-align: right;
   }
 
@@ -753,36 +713,6 @@
   }
 
   @media (max-width: 760px) {
-    .reg-payment-layout {
-      grid-template-columns: 1fr;
-    }
-
-    .reg-payment-details {
-      grid-template-columns: 1fr;
-      padding: 0.85rem;
-    }
-
-    .reg-payment-detail {
-      background: rgba(255,255,255,0.7);
-      padding: 0.75rem;
-      border: 1px solid rgba(245,158,11,0.14);
-    }
-
-    .reg-payment-qr {
-      padding: 0.85rem;
-    }
-
-    .reg-payment-qr-img {
-      max-width: 230px;
-    }
-
-    .reg-payment-upload {
-      width: 100%;
-      white-space: normal;
-      text-align: center;
-      line-height: 1.35;
-      padding: 0.85rem 1rem;
-    }
 
     .reg-progress-top {
       align-items: flex-start;
