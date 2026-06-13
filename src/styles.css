@@ -1036,3 +1036,50 @@ img {
     padding: 0.68rem;
   }
 }
+
+.nav-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.nav-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.bbjf-password-field {
+  position: relative;
+}
+
+.bbjf-password-input {
+  padding-inline-end: 3.2rem;
+}
+
+.bbjf-password-toggle {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0.7rem;
+  display: inline-grid;
+  width: 2.25rem;
+  place-items: center;
+  border: 0;
+  border-radius: 0.8rem;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.bbjf-password-toggle:hover {
+  background: rgba(22, 101, 52, 0.08);
+  color: #14532d;
+  transform: translateY(-1px);
+}
+
+.bbjf-password-toggle:focus-visible {
+  outline: 3px solid rgba(22, 101, 52, 0.22);
+  outline-offset: 2px;
+}

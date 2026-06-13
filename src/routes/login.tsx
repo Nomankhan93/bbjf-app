@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { PasswordInput } from '../components/auth/PasswordInput'
 import { useI18n } from '../lib/i18n'
 import { supabase } from '../lib/supabase/client'
 
@@ -67,13 +68,12 @@ function LoginPage() {
             <label className="mb-1 block text-sm font-medium text-slate-700">
               {t('authPage.common.password')}
             </label>
-            <input
-              type="password"
+            <PasswordInput
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
-              className="bbjf-input"
               placeholder={t('login.password.placeholder')}
+              autoComplete="current-password"
             />
           </div>
 

@@ -4,6 +4,7 @@ import {
   Outlet,
   Scripts,
   createRootRoute,
+  useNavigate,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useEffect, useState, type ReactNode } from 'react'
@@ -14,20 +15,13 @@ import {
 } from '../lib/i18n'
 import { useAuthRole } from '../hooks/useAuthRole'
 import { InstallAppPrompt } from '../components/pwa/InstallAppPrompt'
+import { supabase } from '../lib/supabase/client'
 import styles from '../styles.css?url'
 
 const APP_NAME = 'Bilawal Bhutto Jayala Federation'
 const APP_SHORT_NAME = 'BBJF'
 const APP_FULL_TITLE = `${APP_NAME} - Membership Platform`
 const BBJF_ICON_PATH = '/bbjf-icon-512.png'
-
-type AppRoutePath =
-  | '/'
-  | '/signup'
-  | '/login'
-  | '/dashboard'
-  | '/register'
-  | '/admin'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -40,13 +34,13 @@ export const Route = createRootRoute({
         content:
           'Bilawal Bhutto Jayala Federation digital membership platform with member registration, admin approval, digital cards, and QR verification.',
       },
-      { name: 'theme-color', content: '#1F6B43' },
+      { name: 'theme-color', content: '#000000' },
       { name: 'application-name', content: `${APP_NAME} - ${APP_SHORT_NAME}` },
       { name: 'apple-mobile-web-app-title', content: APP_SHORT_NAME },
       { name: 'apple-mobile-web-app-capable', content: 'yes' },
       { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
       { name: 'mobile-web-app-capable', content: 'yes' },
-      { name: 'msapplication-TileColor', content: '#1F6B43' },
+      { name: 'msapplication-TileColor', content: '#000000' },
       { property: 'og:title', content: APP_FULL_TITLE },
       {
         property: 'og:description',
@@ -70,7 +64,7 @@ export const Route = createRootRoute({
       },
       {
         rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap',
+        href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap',
       },
     ],
   }),
@@ -123,47 +117,57 @@ function I18nShell({ children }: { children: ReactNode }) {
 }
 
 function SiteHeader() {
+  const navigate = useNavigate()
   const { t } = useI18n()
   const { isLoggedIn, isAdmin } = useAuthRole()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
-  const navItems: Array<{ to: AppRoutePath; label: string }> = isLoggedIn
-    ? [
-        { to: '/', label: t('nav.home') },
-        { to: '/dashboard', label: t('nav.dashboard') },
-        { to: '/register', label: t('nav.register') },
-        ...(isAdmin ? [{ to: '/admin' as const, label: t('nav.admin') }] : []),
-      ]
-    : [
-        { to: '/', label: t('nav.home') },
-        { to: '/signup', label: t('auth.joinNow') },
-        { to: '/login', label: t('auth.login') },
-      ]
+  async function handleLogout() {
+    if (isLoggingOut) return
+
+    setIsLoggingOut(true)
+    await supabase.auth.signOut()
+    setIsLoggingOut(false)
+    navigate({ to: '/' })
+  }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--header-bg)]/95 shadow-[0_8px_30px_rgba(15,23,42,0.04)] backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--header-bg)] backdrop-blur-md">
       <div className="page-wrap flex min-h-20 items-center justify-between gap-4">
-        <Link
-          to="/"
-          className="brand-pill max-w-[72vw] no-underline"
-          onClick={() => setMobileOpen(false)}
-        >
+        <Link to="/" className="brand-pill">
           <img
             src={BBJF_ICON_PATH}
             alt={`${APP_SHORT_NAME} logo`}
-            className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-emerald-100"
+            className="h-10 w-10 rounded-full object-cover"
           />
-          <span className="brand-text truncate">
+          <span className="brand-text">
             {t('brand.name')} - {APP_SHORT_NAME}
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex" aria-label="Main navigation">
-          {navItems.map((item) => (
-            <NavLink key={item.to} to={item.to}>
-              {item.label}
-            </NavLink>
-          ))}
+        <nav className="hidden items-center gap-6 md:flex">
+          <NavLink to="/">{t('nav.home')}</NavLink>
+          {isLoggedIn ? (
+            <>
+              <NavLink to="/dashboard">{t('nav.dashboard')}</NavLink>
+              <NavLink to="/card">{t('nav.membershipCard')}</NavLink>
+              <NavLink to="/register">{t('nav.register')}</NavLink>
+              {isAdmin ? <NavLink to="/admin">{t('nav.admin')}</NavLink> : null}
+              <button
+                type="button"
+                className="nav-link nav-button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? t('auth.loggingOut') : t('auth.logout')}
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/signup">{t('auth.joinNow')}</NavLink>
+              <NavLink to="/login">{t('auth.login')}</NavLink>
+            </>
+          )}
         </nav>
 
         <div className="hidden md:block">
@@ -172,46 +176,31 @@ function SiteHeader() {
 
         <div className="flex items-center gap-2 md:hidden">
           <LanguageSwitcher compact />
-          <button
-            type="button"
-            onClick={() => setMobileOpen((value) => !value)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--line)] bg-white text-[var(--sea-ink)] shadow-sm"
-            aria-label="Open navigation menu"
-            aria-expanded={mobileOpen}
-            aria-controls="mobile-navigation"
-          >
-            <MenuIcon open={mobileOpen} />
-          </button>
-        </div>
-      </div>
-
-      <div
-        id="mobile-navigation"
-        className={`border-t border-[var(--line)] bg-white/96 backdrop-blur-md md:hidden ${
-          mobileOpen ? 'block' : 'hidden'
-        }`}
-      >
-        <div className="page-wrap py-3">
-          <nav className="grid gap-2" aria-label="Mobile navigation">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                mobile
-                onClick={() => setMobileOpen(false)}
+          {isLoggedIn ? (
+            <>
+              <Link
+                to="/card"
+                className="rounded-xl bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white no-underline"
               >
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-
-          <Link
-            to={isLoggedIn ? '/dashboard' : '/signup'}
-            onClick={() => setMobileOpen(false)}
-            className="mt-3 flex justify-center rounded-xl bg-[var(--accent)] px-4 py-3 text-sm font-bold text-white no-underline shadow-[0_12px_30px_rgba(31,107,67,0.22)]"
-          >
-            {isLoggedIn ? t('nav.dashboard') : t('auth.joinNow')}
-          </Link>
+                {t('nav.digitalCard')}
+              </Link>
+              <button
+                type="button"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? '...' : t('auth.logout')}
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className="rounded-xl bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white no-underline"
+            >
+              {t('auth.login')}
+            </Link>
+          )}
         </div>
       </div>
     </header>
@@ -221,63 +210,18 @@ function SiteHeader() {
 function NavLink({
   to,
   children,
-  mobile = false,
-  onClick,
 }: {
-  to: AppRoutePath
+  to: '/' | '/signup' | '/login' | '/dashboard' | '/card' | '/register' | '/admin'
   children: ReactNode
-  mobile?: boolean
-  onClick?: () => void
 }) {
-  const baseClass = mobile
-    ? 'flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 no-underline transition hover:bg-slate-50 hover:text-emerald-800'
-    : 'nav-link'
-
-  const activeClass = mobile
-    ? 'flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800 no-underline ring-1 ring-emerald-100'
-    : 'nav-link is-active'
-
   return (
     <Link
       to={to}
-      onClick={onClick}
-      className={baseClass}
-      activeProps={{ className: activeClass }}
+      className="nav-link"
+      activeProps={{ className: 'nav-link is-active' }}
     >
       {children}
     </Link>
-  )
-}
-
-function MenuIcon({ open }: { open: boolean }) {
-  if (open) {
-    return (
-      <svg
-        aria-hidden="true"
-        className="h-5 w-5"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-      >
-        <path d="M6 6l12 12M18 6L6 18" />
-      </svg>
-    )
-  }
-
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-5 w-5"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.4"
-      strokeLinecap="round"
-    >
-      <path d="M4 7h16M4 12h16M4 17h16" />
-    </svg>
   )
 }
 
@@ -285,14 +229,9 @@ function SiteFooter() {
   const { t } = useI18n()
 
   return (
-    <footer className="site-footer mt-16 border-t border-[var(--line)] py-8">
-      <div className="page-wrap flex flex-col gap-2 text-sm text-[var(--sea-ink-soft)] md:flex-row md:items-center md:justify-between">
-        <span>
-          © {new Date().getFullYear()} {t('brand.name')}. All rights reserved.
-        </span>
-        <span className="font-semibold text-emerald-800">
-          Secure digital membership • QR verification
-        </span>
+    <footer className="site-footer mt-16 py-8">
+      <div className="page-wrap text-sm text-[var(--sea-ink-soft)]">
+        © {new Date().getFullYear()} {t('brand.name')}. All rights reserved.
       </div>
     </footer>
   )
