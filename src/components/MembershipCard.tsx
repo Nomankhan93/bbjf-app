@@ -4,6 +4,7 @@ import { useI18n } from '../lib/i18n'
 export const APP_NAME = 'Bilawal Bhutto Jayala Federation'
 export const APP_SHORT_NAME = 'BBJF'
 export const BBJF_ICON_PATH = '/bbjf-icon-512.png'
+export const BBJF_LEADER_IMAGE_PATH = '/card-assets/bilawal-bhutto-card-leader.png'
 export const CARD_EXPORT_WIDTH = 1016
 export const CARD_EXPORT_HEIGHT = 638
 
@@ -40,6 +41,7 @@ type MembershipCardProps = {
   member: MembershipCardMember
   photoUrl: string | null
   brandIconUrl: string | null
+  leaderImageUrl?: string | null
   qrUrl: string | null
   verifyUrl: string
   frontRef?: Ref<HTMLElement>
@@ -48,7 +50,7 @@ type MembershipCardProps = {
 
 export const MembershipCard = forwardRef<HTMLDivElement, MembershipCardProps>(
   function MembershipCard(
-    { member, photoUrl, brandIconUrl, qrUrl, verifyUrl, frontRef, backRef },
+    { member, photoUrl, brandIconUrl, leaderImageUrl, qrUrl, verifyUrl, frontRef, backRef },
     ref,
   ) {
     return (
@@ -61,6 +63,7 @@ export const MembershipCard = forwardRef<HTMLDivElement, MembershipCardProps>(
           member={member}
           photoUrl={photoUrl}
           brandIconUrl={brandIconUrl}
+          leaderImageUrl={leaderImageUrl}
           qrUrl={qrUrl}
           verifyUrl={verifyUrl}
         />
@@ -81,10 +84,11 @@ const CardFront = forwardRef<HTMLElement, {
   member: MembershipCardMember
   photoUrl: string | null
   brandIconUrl: string | null
+  leaderImageUrl?: string | null
   qrUrl: string | null
   verifyUrl: string
 }>(function CardFront(
-  { member, photoUrl, brandIconUrl, qrUrl, verifyUrl },
+  { member, photoUrl, brandIconUrl, leaderImageUrl, qrUrl, verifyUrl },
   ref,
 ) {
   const { t, direction, language } = useI18n()
@@ -98,29 +102,31 @@ const CardFront = forwardRef<HTMLElement, {
     >
       <CardWatermark brandIconUrl={brandIconUrl} />
 
-      <div className="relative overflow-hidden bg-slate-950 px-7 py-6 text-white">
+      <div className="relative h-[214px] overflow-hidden bg-slate-950 px-7 py-6 text-white">
         <FlagStripes />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-black/45 to-black/25" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-black/40 to-black/15" />
+        <div className="absolute inset-y-0 right-0 w-[36%] bg-emerald-800/60" />
+        <LeaderPortrait leaderImageUrl={leaderImageUrl} />
 
-        <div className="relative flex flex-wrap items-start justify-between gap-5">
-          <div className="flex min-w-0 items-center gap-5">
+        <div className="relative z-10 flex h-full items-start gap-5">
+          <div className="flex h-full shrink-0 flex-col items-center justify-between">
             <LogoMark brandIconUrl={brandIconUrl} />
 
-            <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-[0.34em] text-white/80">
-                {APP_SHORT_NAME} · {t('card.digitalMemberId')}
-              </p>
-              <h2 className="mt-2 text-3xl font-black uppercase leading-none tracking-tight sm:text-5xl">
-                {APP_NAME}
-              </h2>
-              <p className="mt-2 text-sm font-semibold text-white/85">
-                {t('card.officialVerified')}
-              </p>
+            <div className="rounded-2xl border border-white/25 bg-white px-5 py-3 text-sm font-black uppercase tracking-wide text-slate-950 shadow-lg">
+              {t('card.verified')}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/25 bg-white px-5 py-3 text-sm font-black uppercase tracking-wide text-slate-950 shadow-lg">
-            {t('card.verified')}
+          <div className="min-w-0 max-w-[610px] pt-1">
+            <p className="text-xs font-black uppercase tracking-[0.34em] text-white/80">
+              {APP_SHORT_NAME} · {t('card.digitalMemberId')}
+            </p>
+            <h2 className="mt-3 text-[42px] font-black uppercase leading-[0.95] tracking-tight text-white drop-shadow-sm">
+              {APP_NAME}
+            </h2>
+            <p className="mt-3 max-w-[480px] text-sm font-semibold text-white/85">
+              {t('card.officialVerified')}
+            </p>
           </div>
         </div>
       </div>
@@ -383,6 +389,22 @@ function LogoMark({
       className={`${sizeClass} shrink-0 rounded-full border-4 border-white bg-white object-cover shadow-xl`}
       draggable={false}
     />
+  )
+}
+
+function LeaderPortrait({ leaderImageUrl }: { leaderImageUrl?: string | null }) {
+  const src = leaderImageUrl || BBJF_LEADER_IMAGE_PATH
+
+  return (
+    <div className="pointer-events-none absolute bottom-0 right-0 z-[6] h-full w-[38%] overflow-hidden">
+      <img
+        src={src}
+        alt=""
+        className="absolute bottom-0 right-[-6px] h-[198px] w-[332px] object-contain object-bottom object-right drop-shadow-[0_18px_30px_rgba(0,0,0,0.28)]"
+        draggable={false}
+      />
+      <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-slate-950/40 to-transparent" />
+    </div>
   )
 }
 

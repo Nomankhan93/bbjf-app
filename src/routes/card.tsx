@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   APP_SHORT_NAME,
   BBJF_ICON_PATH,
+  BBJF_LEADER_IMAGE_PATH,
   CARD_EXPORT_HEIGHT,
   CARD_EXPORT_WIDTH,
   MembershipCard,
@@ -37,6 +38,7 @@ function CardPage() {
   const [member, setMember] = useState<Member | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [brandIconUrl, setBrandIconUrl] = useState<string | null>(null)
+  const [leaderImageUrl, setLeaderImageUrl] = useState<string | null>(null)
   const [qrUrl, setQrUrl] = useState<string | null>(null)
   const [verifyUrl, setVerifyUrl] = useState('')
   const [error, setError] = useState('')
@@ -64,8 +66,12 @@ function CardPage() {
     setLoading(true)
     setError('')
 
-    const iconDataUrl = await imageUrlToDataUrl(BBJF_ICON_PATH)
+    const [iconDataUrl, leaderDataUrl] = await Promise.all([
+      imageUrlToDataUrl(BBJF_ICON_PATH),
+      imageUrlToDataUrl(BBJF_LEADER_IMAGE_PATH),
+    ])
     setBrandIconUrl(iconDataUrl || BBJF_ICON_PATH)
+    setLeaderImageUrl(leaderDataUrl || BBJF_LEADER_IMAGE_PATH)
 
     const {
       data: { user },
@@ -229,6 +235,7 @@ function CardPage() {
                     member={member}
                     photoUrl={photoUrl}
                     brandIconUrl={brandIconUrl}
+                    leaderImageUrl={leaderImageUrl}
                     qrUrl={qrUrl}
                     verifyUrl={verifyUrl}
                   />
