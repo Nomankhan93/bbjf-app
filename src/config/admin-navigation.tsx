@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react'
 import {
   BadgeCheck,
+  ClipboardList,
   Clock3,
   Download,
   IdCard,
   LayoutDashboard,
+  SearchCheck,
   ShieldCheck,
   Users,
   XCircle,
@@ -28,63 +30,80 @@ export type AdminNavigationGroup = {
 
 export const adminNavigationGroups: AdminNavigationGroup[] = [
   {
-    title: 'Overview',
+    title: 'Membership Console',
     items: [
       {
-        label: 'Dashboard',
-        description: 'Counts, filters and member records',
+        label: 'Dashboard Overview',
+        description: 'Live counts, filters and recent applications',
         to: '/admin',
         icon: <LayoutDashboard size={17} />,
+      },
+      {
+        label: 'All Applications',
+        description: 'Search every submitted membership form',
+        to: '/admin',
+        icon: <Users size={17} />,
       },
     ],
   },
   {
-    title: 'Membership',
+    title: 'Review Queue',
     items: [
       {
-        label: 'All Members',
-        description: 'Search and review every application',
-        to: '/admin',
-        icon: <Users size={17} />,
-      },
-      {
         label: 'Pending Review',
-        description: 'Applications waiting for action',
+        description: 'Applications waiting for admin action',
         to: '/admin',
         icon: <Clock3 size={17} />,
       },
       {
         label: 'Approved Members',
-        description: 'Active members with card access',
+        description: 'Members with active digital card access',
         to: '/admin',
         icon: <BadgeCheck size={17} />,
       },
       {
-        label: 'Rejected Applications',
-        description: 'Rejected or returned applications',
+        label: 'Rejected / Returned',
+        description: 'Applications needing correction',
         to: '/admin',
         icon: <XCircle size={17} />,
       },
     ],
   },
   {
-    title: 'Tools',
+    title: 'Membership Tools',
     items: [
       {
         label: 'Digital Cards',
-        description: 'Open card from member detail',
+        description: 'Open cards from member detail pages',
         to: '/admin',
         icon: <IdCard size={17} />,
       },
       {
         label: 'CSV Export',
-        description: 'Available on member list',
+        description: 'Download filtered member records',
         to: '/admin',
         icon: <Download size={17} />,
       },
       {
+        label: 'Data Verification',
+        description: 'CNIC, mobile and area review checklist',
+        to: '/admin',
+        icon: <SearchCheck size={17} />,
+      },
+      {
+        label: 'Approvals Workflow',
+        description: 'Approve or reject from detail page',
+        to: '/admin',
+        icon: <ClipboardList size={17} />,
+      },
+    ],
+  },
+  {
+    title: 'Security',
+    items: [
+      {
         label: 'Roles & Permissions',
-        description: 'Database controlled for now',
+        description: 'Controlled through Supabase user_roles table',
         icon: <ShieldCheck size={17} />,
         badge: 'DB',
         disabled: true,

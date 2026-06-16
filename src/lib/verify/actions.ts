@@ -11,7 +11,7 @@ type VerifyMemberInput = {
 }
 
 export const verifyMemberAction = createServerFn({ method: 'POST' })
-  .inputValidator((data: VerifyMemberInput) => {
+  .validator((data: VerifyMemberInput) => {
     if (!data.memberNo || data.memberNo.trim().length < 3) {
       throw new Error('Member number is required.')
     }

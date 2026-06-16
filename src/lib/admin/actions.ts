@@ -37,7 +37,7 @@ async function requireAdmin(accessToken: string) {
 }
 
 export const approveMemberAction = createServerFn({ method: 'POST' })
-  .inputValidator((data: { memberId: string; accessToken: string }) => {
+  .validator((data: { memberId: string; accessToken: string }) => {
     if (!data.memberId) throw new Error('Member ID is required.')
     if (!data.accessToken) throw new Error('Access token is required.')
     return data
@@ -58,7 +58,7 @@ export const approveMemberAction = createServerFn({ method: 'POST' })
   })
 
 export const rejectMemberAction = createServerFn({ method: 'POST' })
-  .inputValidator(
+  .validator(
     (data: {
       memberId: string
       rejectionReason: string

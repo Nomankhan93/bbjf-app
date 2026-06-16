@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { adminRoleNames } from '../config/navigation'
 import { supabase } from '../lib/supabase/client'
 
 type AuthUser = {
@@ -8,6 +9,7 @@ type AuthUser = {
 
 export function useAuthRole() {
   const [authLoading, setAuthLoading] = useState(true)
+  const [logoutLoading, setLogoutLoading] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [accountEmail, setAccountEmail] = useState('')
@@ -17,7 +19,7 @@ export function useAuthRole() {
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .eq('role', 'admin')
+      .in('role', [...adminRoleNames])
       .limit(1)
 
     if (error) {
@@ -78,10 +80,35 @@ export function useAuthRole() {
     }
   }, [syncAuthState])
 
+  const accountInitial = (
+    accountEmail.split('@')[0]?.trim().charAt(0) || 'M'
+  ).toUpperCase()
+
+  async function logout() {
+    setLogoutLoading(true)
+
+    const { error } = await supabase.auth.signOut()
+
+    if (error) {
+      console.error('Logout failed:', error.message)
+      setLogoutLoading(false)
+      return false
+    }
+
+    setIsLoggedIn(false)
+    setIsAdmin(false)
+    setAccountEmail('')
+    setLogoutLoading(false)
+    return true
+  }
+
   return {
     authLoading,
+    logoutLoading,
     isLoggedIn,
     isAdmin,
     accountEmail,
+    accountInitial,
+    logout,
   }
 }

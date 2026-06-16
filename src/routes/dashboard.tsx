@@ -1,5 +1,17 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
+import {
+  BadgeCheck,
+  CalendarDays,
+  ClipboardList,
+  Copy,
+  Eye,
+  EyeOff,
+  IdCard,
+  RefreshCw,
+  ShieldCheck,
+  UserRound,
+} from 'lucide-react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useI18n } from '../lib/i18n'
 import { supabase } from '../lib/supabase/client'
 
@@ -33,7 +45,7 @@ type Member = {
   emergency_contact_relation: string | null
   emergency_contact_mobile: string | null
   declaration_accepted: boolean
-  photo_url: string
+  photo_url: string | null
   status: MemberStatus
   rejection_reason: string | null
   approved_at: string | null
@@ -45,6 +57,7 @@ function DashboardPage() {
   const navigate = useNavigate()
   const { t, direction, language } = useI18n()
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [member, setMember] = useState<Member | null>(null)
   const [photoSignedUrl, setPhotoSignedUrl] = useState<string | null>(null)
   const [error, setError] = useState('')
@@ -52,7 +65,7 @@ function DashboardPage() {
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    loadDashboard()
+    void loadDashboard()
   }, [])
 
   const verifyUrl = useMemo(() => {
@@ -61,7 +74,8 @@ function DashboardPage() {
   }, [member?.member_no])
 
   async function loadDashboard() {
-    setLoading(true)
+    setLoading((previous) => previous && !member)
+    setRefreshing(Boolean(member))
     setError('')
 
     const {
@@ -83,6 +97,7 @@ function DashboardPage() {
     if (memberError) {
       setError(memberError.message)
       setLoading(false)
+      setRefreshing(false)
       return
     }
 
@@ -100,11 +115,7 @@ function DashboardPage() {
     }
 
     setLoading(false)
-  }
-
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    navigate({ to: '/login' })
+    setRefreshing(false)
   }
 
   async function copyVerifyLink() {
@@ -121,70 +132,71 @@ function DashboardPage() {
 
   if (loading) {
     return (
-      <main className="bbjf-dashboard-page px-4 py-10" dir={direction}>
-        <div className="mx-auto max-w-6xl rounded-3xl bg-white/90 p-6 shadow-[0_20px_70px_rgba(15,23,42,0.10)] ring-1 ring-white/70">
-          <p className="text-slate-600">{t('dashboard.loading')}</p>
+      <main className="px-4 py-10" dir={direction}>
+        <div className="page-wrap rounded-[2rem] border border-white/70 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-3 text-sm font-bold text-slate-600">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            {t('dashboard.loading')}
+          </div>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="bbjf-dashboard-page px-4 py-10" dir={direction}>
-      <div className="mx-auto max-w-6xl space-y-6">
-        <header className="bbjf-dashboard-hero flex flex-col justify-between gap-4 rounded-[2rem] p-7 md:flex-row md:items-center">
-          <div>
-            <p className="text-sm font-semibold text-emerald-700">
-              {t('brand.name')}
-            </p>
-            <h1 className="mt-1 text-2xl font-black text-slate-950">
-              {t('dashboard.title')}
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">
-              {t('dashboard.description')}
-            </p>
-          </div>
+    <main className="px-4 py-8 md:py-10" dir={direction}>
+      <div className="page-wrap space-y-6">
+        <header className="relative isolate overflow-hidden rounded-[2rem] border border-white/70 bg-slate-950 p-6 text-white shadow-[0_24px_80px_rgba(15,23,42,0.16)] md:p-8">
+          <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-red-700 via-white to-emerald-700" />
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/20 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-red-500/15 blur-3xl" />
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={loadDashboard}
-              className="rounded-xl border border-white/60 bg-white/80 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-white"
-            >
-              {t('dashboard.refresh')}
-            </button>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-xl border border-white/60 bg-white/80 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-white"
-            >
-              {t('auth.logout')}
-            </button>
+          <div className="relative flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-emerald-200">
+                {t('brand.name')}
+              </p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl">
+                {member ? `Welcome, ${member.full_name}` : t('dashboard.title')}
+              </h1>
+              <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-white/70 md:text-base">
+                {member
+                  ? 'Your membership profile, approval status and digital card actions are available here.'
+                  : t('dashboard.description')}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => void loadDashboard()}
+                disabled={refreshing}
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-black text-white backdrop-blur transition hover:bg-white/15 disabled:opacity-60"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing ? 'Refreshing...' : t('dashboard.refresh')}
+              </button>
+              {member ? (
+                <Link
+                  to="/register"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-black text-slate-950 no-underline transition hover:bg-slate-100"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  {member.status === 'approved' ? 'View Form' : t('dashboard.editPendingForm')}
+                </Link>
+              ) : null}
+            </div>
           </div>
         </header>
 
         {error ? (
-          <div className="rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-700">
+          <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-700">
             {error}
           </div>
         ) : null}
 
         {!member ? (
-          <section className="bbjf-empty-card rounded-[2rem] p-7">
-            <h2 className="text-xl font-bold text-slate-900">
-              {t('dashboard.completeRegistrationTitle')}
-            </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              {t('dashboard.completeRegistrationDescription')}
-            </p>
-
-            <Link
-              to="/register"
-              className="bbjf-action-btn mt-5"
-            >
-              {t('dashboard.fillMembershipForm')}
-            </Link>
-          </section>
+          <NoMemberState />
         ) : (
           <>
             <StatusHero
@@ -195,23 +207,54 @@ function DashboardPage() {
               onCopyVerifyLink={copyVerifyLink}
             />
 
-            <section className="grid gap-6 lg:grid-cols-[1.5fr_0.85fr]">
-              <div className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
+            <section className="grid gap-4 md:grid-cols-4">
+              <DashboardMetric
+                icon={<ShieldCheck className="h-5 w-5" />}
+                label={t('dashboard.currentStatus')}
+                value={statusLabel(member.status, t)}
+                tone={member.status}
+              />
+              <DashboardMetric
+                icon={<IdCard className="h-5 w-5" />}
+                label={t('dashboard.memberNo')}
+                value={member.member_no ?? t('dashboard.notIssuedYet')}
+                tone="neutral"
+              />
+              <DashboardMetric
+                icon={<CalendarDays className="h-5 w-5" />}
+                label={t('dashboard.submittedOn')}
+                value={formatDate(member.created_at, language) ?? t('common.na')}
+                tone="neutral"
+              />
+              <DashboardMetric
+                icon={<BadgeCheck className="h-5 w-5" />}
+                label={t('dashboard.approvedOn')}
+                value={formatDate(member.approved_at, language) ?? t('common.na')}
+                tone="approved"
+              />
+            </section>
+
+            <section className="grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
+              <div className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_18px_55px_rgba(15,23,42,0.08)] md:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900">
+                    <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-700">
+                      {t('dashboard.personalInfo')}
+                    </p>
+                    <h2 className="mt-2 text-2xl font-black text-slate-950">
                       {t('dashboard.memberProfile')}
                     </h2>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {t('dashboard.submittedInfo')}
+                    <p className="mt-1 text-sm font-semibold text-slate-500">
+                      {t('dashboard.maskedDesc')}
                     </p>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => setShowSensitive((value) => !value)}
-                    className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-black text-slate-700 hover:bg-slate-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm hover:bg-slate-50"
                   >
+                    {showSensitive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     {showSensitive ? t('dashboard.hideSensitive') : t('dashboard.showSensitive')}
                   </button>
                 </div>
@@ -222,47 +265,31 @@ function DashboardPage() {
                       <img
                         src={photoSignedUrl}
                         alt={member.full_name}
-                        className="h-32 w-32 rounded-2xl object-cover ring-1 ring-slate-200"
+                        className="h-40 w-40 rounded-[1.6rem] border-4 border-white object-cover object-top shadow-lg ring-1 ring-slate-200"
                       />
                     ) : (
-                      <div className="flex h-32 w-32 items-center justify-center rounded-2xl bg-slate-100 text-sm text-slate-500">
+                      <div className="flex h-40 w-40 items-center justify-center rounded-[1.6rem] border border-slate-200 bg-slate-50 text-sm font-bold text-slate-500">
                         {t('dashboard.noPhoto')}
                       </div>
                     )}
                   </div>
 
-                  <div className="grid flex-1 gap-4 sm:grid-cols-2">
+                  <div className="grid flex-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     <InfoItem label={t('dashboard.fullName')} value={member.full_name} />
                     <InfoItem label={t('dashboard.fatherName')} value={member.father_name} />
                     <InfoItem label={t('dashboard.cnic')} value={showSensitive ? member.cnic : maskCnic(member.cnic)} />
                     <InfoItem label={t('dashboard.mobile')} value={showSensitive ? member.mobile : maskMobile(member.mobile)} />
                     <InfoItem label={t('dashboard.district')} value={member.district} />
                     <InfoItem label={t('dashboard.taluka')} value={member.taluka} />
-                    <InfoItem label={t('dashboard.dateOfBirth')} value={formatDate(member.date_of_birth, language)} />
-                    <InfoItem label={t('dashboard.gender')} value={member.gender} />
-                    <InfoItem label={t('dashboard.education')} value={member.education} />
-                    <InfoItem label={t('dashboard.bloodGroup')} value={member.blood_group} />
-                    <InfoItem label={t('dashboard.profession')} value={member.profession} />
                     <InfoItem label={t('dashboard.designation')} value={member.designation} />
                     <InfoItem label={t('dashboard.designationLevel')} value={member.designation_level} />
                     <InfoItem label={t('dashboard.designationArea')} value={member.designation_area} />
+                    <InfoItem label={t('dashboard.profession')} value={member.profession} />
+                    <InfoItem label={t('dashboard.education')} value={member.education} />
+                    <InfoItem label={t('dashboard.bloodGroup')} value={member.blood_group} />
+                    <InfoItem label={t('dashboard.dateOfBirth')} value={formatDate(member.date_of_birth, language)} />
+                    <InfoItem label={t('dashboard.gender')} value={member.gender} />
                     <InfoItem label={t('dashboard.casteBranch')} value={member.caste_branch} />
-                    <InfoItem
-                      label={t('dashboard.memberNo')}
-                      value={member.member_no ?? t('dashboard.notIssuedYet')}
-                    />
-                    <InfoItem label={t('dashboard.emergencyContact')} value={member.emergency_contact_name} />
-                    <InfoItem label={t('dashboard.emergencyRelation')} value={member.emergency_contact_relation} />
-                    <InfoItem
-                      label={t('dashboard.emergencyMobile')}
-                      value={
-                        member.emergency_contact_mobile
-                          ? showSensitive
-                            ? member.emergency_contact_mobile
-                            : maskMobile(member.emergency_contact_mobile)
-                          : null
-                      }
-                    />
                     <InfoItem
                       label={t('dashboard.declaration')}
                       value={member.declaration_accepted ? t('common.accepted') : t('common.notAccepted')}
@@ -270,36 +297,43 @@ function DashboardPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 rounded-xl bg-slate-50 p-4">
-                  <InfoItem label={t('dashboard.address')} value={member.address} />
+                <div className="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(260px,0.65fr)]">
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                    <InfoItem label={t('dashboard.address')} value={member.address} />
+                  </div>
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                    <InfoItem
+                      label={t('dashboard.emergencyContact')}
+                      value={
+                        [
+                          member.emergency_contact_name,
+                          member.emergency_contact_relation,
+                          member.emergency_contact_mobile
+                            ? showSensitive
+                              ? member.emergency_contact_mobile
+                              : maskMobile(member.emergency_contact_mobile)
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ') || null
+                      }
+                    />
+                  </div>
                 </div>
               </div>
 
-              <aside className="space-y-6">
-                <section className="bbjf-empty-card rounded-[2rem] p-7">
-                  <h2 className="text-lg font-bold text-slate-900">
-                    {t('dashboard.currentStatus')}
-                  </h2>
-
-                  <div className="mt-4">
-                    <StatusBadge status={member.status} />
-                  </div>
-
-                  <StatusNotice member={member} language={language} />
-                </section>
-
-                <section className="bbjf-empty-card rounded-[2rem] p-7">
-                  <h2 className="text-lg font-bold text-slate-900">
+              <aside className="space-y-5">
+                <section className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
+                  <h2 className="text-lg font-black text-slate-950">
                     {t('dashboard.nextSteps')}
                   </h2>
-
                   <StatusTimeline status={member.status} />
 
-                  <div className="mt-6 flex flex-col gap-3">
+                  <div className="mt-6 grid gap-3">
                     {member.status !== 'approved' ? (
                       <Link
                         to="/register"
-                        className="rounded-xl border border-emerald-700 px-4 py-2 text-center text-sm font-bold text-emerald-700 no-underline hover:bg-emerald-50"
+                        className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-black text-emerald-800 no-underline hover:bg-emerald-100"
                       >
                         {member.status === 'rejected'
                           ? t('dashboard.updateAndResubmit')
@@ -311,21 +345,31 @@ function DashboardPage() {
                       <>
                         <Link
                           to="/card"
-                          className="rounded-xl bg-slate-900 px-4 py-2 text-center text-sm font-bold text-white no-underline hover:bg-slate-800"
+                          className="rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-black text-white no-underline hover:bg-black"
                         >
                           {t('dashboard.viewDigitalCard')}
                         </Link>
-
                         <button
                           type="button"
                           onClick={copyVerifyLink}
-                          className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 hover:bg-slate-50"
                         >
+                          <Copy className="h-4 w-4" />
                           {copied ? t('dashboard.linkCopied') : t('dashboard.copyVerifyLink')}
                         </button>
                       </>
                     ) : null}
                   </div>
+                </section>
+
+                <section className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
+                  <h2 className="text-lg font-black text-slate-950">
+                    {t('dashboard.currentStatus')}
+                  </h2>
+                  <div className="mt-4">
+                    <StatusBadge status={member.status} />
+                  </div>
+                  <StatusNotice member={member} language={language} />
                 </section>
               </aside>
             </section>
@@ -333,6 +377,30 @@ function DashboardPage() {
         )}
       </div>
     </main>
+  )
+}
+
+function NoMemberState() {
+  const { t } = useI18n()
+
+  return (
+    <section className="rounded-[2rem] border border-white/70 bg-white/90 p-8 text-center shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+        <UserRound className="h-7 w-7" />
+      </div>
+      <h2 className="mt-5 text-2xl font-black text-slate-950">
+        {t('dashboard.completeRegistrationTitle')}
+      </h2>
+      <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold leading-7 text-slate-600">
+        {t('dashboard.completeRegistrationDescription')}
+      </p>
+      <Link
+        to="/register"
+        className="mt-6 inline-flex rounded-2xl bg-slate-950 px-6 py-3 text-sm font-black text-white no-underline hover:bg-black"
+      >
+        {t('dashboard.fillMembershipForm')}
+      </Link>
+    </section>
   )
 }
 
@@ -353,7 +421,7 @@ function StatusHero({
   const hero = getStatusHero(member.status)
 
   return (
-    <section className={`rounded-3xl border p-6 shadow-sm ${hero.wrapper}`}>
+    <section className={`rounded-[2rem] border p-5 shadow-sm md:p-6 ${hero.wrapper}`}>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex gap-4">
           <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-2xl font-black ${hero.icon}`}>
@@ -369,10 +437,10 @@ function StatusHero({
             <h2 className="mt-3 text-2xl font-black text-slate-950">
               {t(hero.titleKey)}
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
+            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-700">
               {t(hero.descriptionKey)}
             </p>
-            <p className="mt-3 text-xs font-semibold text-slate-500">
+            <p className="mt-3 text-xs font-bold text-slate-500">
               {t('dashboard.submittedOn')}: {formatDate(member.created_at, language) ?? t('common.na')} · {t('dashboard.updated')}: {formatDate(member.updated_at, language) ?? t('common.na')}
             </p>
           </div>
@@ -383,7 +451,7 @@ function StatusHero({
             <p className="text-xs font-black uppercase tracking-wide text-slate-500">
               {t('dashboard.publicVerification')}
             </p>
-            <p className="break-all text-xs font-semibold text-slate-700">
+            <p className="break-all text-xs font-bold text-slate-700">
               {verifyUrl}
             </p>
             <button
@@ -400,12 +468,45 @@ function StatusHero({
   )
 }
 
+function DashboardMetric({
+  icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: ReactNode
+  label: string
+  value: string
+  tone: MemberStatus | 'neutral'
+}) {
+  const styles = {
+    pending: 'bg-amber-50 text-amber-700 ring-amber-100',
+    approved: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+    rejected: 'bg-red-50 text-red-700 ring-red-100',
+    neutral: 'bg-slate-50 text-slate-700 ring-slate-100',
+  }[tone]
+
+  return (
+    <article className="rounded-[1.5rem] border border-white/70 bg-white/90 p-5 shadow-sm">
+      <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ring-1 ${styles}`}>
+        {icon}
+      </div>
+      <p className="mt-4 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-2 break-words text-lg font-black text-slate-950">
+        {value}
+      </p>
+    </article>
+  )
+}
+
 function StatusNotice({ member, language }: { member: Member; language: string }) {
   const { t } = useI18n()
 
   if (member.status === 'pending') {
     return (
-      <p className="mt-4 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+      <p className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800">
         {t('dashboard.pendingNotice')}
       </p>
     )
@@ -413,8 +514,8 @@ function StatusNotice({ member, language }: { member: Member; language: string }
 
   if (member.status === 'approved') {
     return (
-      <div className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-800">
-        <p className="font-bold">{t('dashboard.verifiedMember')}</p>
+      <div className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-800">
+        <p className="font-black">{t('dashboard.verifiedMember')}</p>
         <p className="mt-1">
           {t('dashboard.approvedOn')}{' '}
           {member.approved_at ? formatDate(member.approved_at, language) : t('common.na')}
@@ -424,8 +525,8 @@ function StatusNotice({ member, language }: { member: Member; language: string }
   }
 
   return (
-    <div className="mt-4 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800">
-      <p className="font-bold">{t('dashboard.applicationRejected')}</p>
+    <div className="mt-4 rounded-2xl bg-red-50 p-4 text-sm font-semibold leading-6 text-red-800">
+      <p className="font-black">{t('dashboard.applicationRejected')}</p>
       <p className="mt-1">
         {member.rejection_reason || t('dashboard.noReasonProvided')}
       </p>
@@ -462,7 +563,7 @@ function StatusTimeline({ status }: { status: MemberStatus }) {
         <div key={step.key} className="flex gap-3">
           <div className="flex flex-col items-center">
             <span
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-black ring-1 ${
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-black ring-1 ${
                 step.done
                   ? 'bg-emerald-700 text-white ring-emerald-700'
                   : step.active
@@ -472,9 +573,9 @@ function StatusTimeline({ status }: { status: MemberStatus }) {
             >
               {step.done ? '✓' : index + 1}
             </span>
-            {index < steps.length - 1 ? <span className="h-7 w-px bg-slate-200" /> : null}
+            {index < steps.length - 1 ? <span className="h-8 w-px bg-slate-200" /> : null}
           </div>
-          <p className="pt-1 text-sm font-bold text-slate-700">{step.label}</p>
+          <p className="pt-1.5 text-sm font-black text-slate-700">{step.label}</p>
         </div>
       ))}
     </div>
@@ -491,11 +592,11 @@ function InfoItem({
   const { t } = useI18n()
 
   return (
-    <div>
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+    <div className="min-w-0 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
         {label}
       </p>
-      <p className="mt-1 text-sm font-semibold text-slate-900">
+      <p className="mt-1 break-words text-sm font-black text-slate-950">
         {value || t('common.notProvided')}
       </p>
     </div>
@@ -514,9 +615,15 @@ function StatusBadge({ status }: { status: MemberStatus }) {
     <span
       className={`inline-flex rounded-full px-3 py-1 text-xs font-black ring-1 ${styles[status]}`}
     >
-      {t(`common.status.${status}`)}
+      {statusLabel(status, t)}
     </span>
   )
+}
+
+function statusLabel(status: MemberStatus, t: ReturnType<typeof useI18n>['t']) {
+  if (status === 'approved') return t('common.status.approved')
+  if (status === 'rejected') return t('common.status.rejected')
+  return t('common.status.pending')
 }
 
 function getStatusHero(status: MemberStatus) {
@@ -564,6 +671,9 @@ function maskMobile(value: string | null | undefined) {
 function formatDate(value: string | null | undefined, language: string) {
   if (!value) return null
 
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+
   const locale = language === 'ur' ? 'ur-PK' : language === 'sd' ? 'sd-PK' : 'en-PK'
-  return new Date(value).toLocaleDateString(locale)
+  return date.toLocaleDateString(locale)
 }

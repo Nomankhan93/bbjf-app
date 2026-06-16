@@ -5,7 +5,8 @@ import {
   useNavigate,
   useRouterState,
 } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { BadgeCheck, Download, IdCard, ListChecks, RefreshCw, Search, ShieldCheck, Users, XCircle } from 'lucide-react'
 import { AdminShell } from '../components/admin/AdminShell'
 import { useI18n, type TranslationKey } from '../lib/i18n'
 import {
@@ -47,6 +48,7 @@ type AdminStats = {
   pending: number
   approved: number
   rejected: number
+  cards: number
 }
 
 const statusLabelKeys: Record<MemberStatus, TranslationKey> = {
@@ -143,6 +145,7 @@ function AdminPage() {
     pending: 0,
     approved: 0,
     rejected: 0,
+    cards: 0,
   })
   const [totalCount, setTotalCount] = useState(0)
   const [statusFilter, setStatusFilter] = useState<'all' | MemberStatus>('all')
@@ -254,14 +257,15 @@ function AdminPage() {
     setMembers(rows)
     setTotalCount(count ?? 0)
 
-    const [total, pending, approved, rejected] = await Promise.all([
+    const [total, pending, approved, rejected, cards] = await Promise.all([
       countMembers(),
       countMembers('pending'),
       countMembers('approved'),
       countMembers('rejected'),
+      countIssuedCards(),
     ])
 
-    setStats({ total, pending, approved, rejected })
+    setStats({ total, pending, approved, rejected, cards })
 
     const signedMap: Record<string, string> = {}
 
@@ -348,6 +352,52 @@ function AdminPage() {
     return count ?? 0
   }
 
+  async function countIssuedCards() {
+    let query: any = supabase
+      .from('members')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'approved')
+      .not('member_no', 'is', null)
+
+    if (districtFilter !== 'all') {
+      query = query.eq('district', districtFilter)
+    }
+
+    if (talukaFilter !== 'all') {
+      query = query.eq('taluka', talukaFilter)
+    }
+
+    if (fromDate) {
+      query = query.gte('created_at', `${fromDate}T00:00:00.000Z`)
+    }
+
+    if (toDate) {
+      query = query.lt('created_at', getNextDateIso(toDate))
+    }
+
+    const safeSearch = sanitizeSearchTerm(debouncedSearch)
+
+    if (safeSearch) {
+      const pattern = `*${safeSearch}*`
+      query = query.or(
+        [
+          `full_name.ilike.${pattern}`,
+          `cnic.ilike.${pattern}`,
+          `mobile.ilike.${pattern}`,
+          `district.ilike.${pattern}`,
+          `taluka.ilike.${pattern}`,
+          `designation.ilike.${pattern}`,
+          `designation_level.ilike.${pattern}`,
+          `designation_area.ilike.${pattern}`,
+          `member_no.ilike.${pattern}`,
+        ].join(','),
+      )
+    }
+
+    const { count } = await query
+    return count ?? 0
+  }
+
   function resetFilters() {
     setStatusFilter('all')
     setDistrictFilter('all')
@@ -402,17 +452,21 @@ function AdminPage() {
   return (
     <AdminShell title={t('admin.title')} subtitle={t('admin.description')}>
       <div className="space-y-6" dir={direction}>
-        <header className="admin-dashboard-hero rounded-2xl bg-white p-6 shadow-sm">
-          <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+        <header className="relative isolate overflow-hidden rounded-[2rem] border border-white/70 bg-slate-950 p-6 text-white shadow-[0_24px_80px_rgba(15,23,42,0.18)] md:p-8">
+          <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-red-700 via-white to-emerald-700" />
+          <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl" />
+          <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-red-500/15 blur-3xl" />
+
+          <div className="relative flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
             <div>
-              <p className="text-sm font-medium text-emerald-700">
-                {t('brand.name')}
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-emerald-200">
+                BBJF Membership Console
               </p>
-              <h1 className="mt-1 text-2xl font-bold text-slate-900">
+              <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl">
                 {t('admin.title')}
               </h1>
-              <p className="mt-1 max-w-3xl text-sm text-slate-600">
-                {t('admin.description')}
+              <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-white/70 md:text-base">
+                Review applications, approve members, reject incomplete forms and manage QR-enabled digital cards. No payment, donation or program modules are included in this BBJF portal.
               </p>
             </div>
 
@@ -421,8 +475,9 @@ function AdminPage() {
                 type="button"
                 onClick={() => void loadAdmin()}
                 disabled={refreshing}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-black text-white backdrop-blur transition hover:bg-white/15 disabled:opacity-60"
               >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                 {refreshing ? 'Refreshing...' : 'Refresh'}
               </button>
 
@@ -430,19 +485,71 @@ function AdminPage() {
                 type="button"
                 onClick={() => void handleExportCsv()}
                 disabled={exporting}
-                className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-black disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-black text-slate-950 transition hover:bg-slate-100 disabled:opacity-60"
               >
+                <Download className="h-4 w-4" />
                 {exporting ? 'Exporting...' : 'Export CSV'}
               </button>
             </div>
           </div>
         </header>
 
-        <section className="grid gap-4 md:grid-cols-4">
-          <StatCard label="Total Applications" value={stats.total} tone="slate" />
-          <StatCard label={t('common.status.pending')} value={stats.pending} tone="amber" />
-          <StatCard label={t('common.status.approved')} value={stats.approved} tone="emerald" />
-          <StatCard label={t('common.status.rejected')} value={stats.rejected} tone="red" />
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <StatCard
+            label="Total Applications"
+            value={stats.total}
+            tone="slate"
+            icon={<Users className="h-5 w-5" />}
+            active={statusFilter === 'all'}
+            onClick={() => {
+              setStatusFilter('all')
+              setPage(1)
+            }}
+          />
+          <StatCard
+            label={t('common.status.pending')}
+            value={stats.pending}
+            tone="amber"
+            icon={<ListChecks className="h-5 w-5" />}
+            active={statusFilter === 'pending'}
+            onClick={() => {
+              setStatusFilter('pending')
+              setPage(1)
+            }}
+          />
+          <StatCard
+            label={t('common.status.approved')}
+            value={stats.approved}
+            tone="emerald"
+            icon={<BadgeCheck className="h-5 w-5" />}
+            active={statusFilter === 'approved'}
+            onClick={() => {
+              setStatusFilter('approved')
+              setPage(1)
+            }}
+          />
+          <StatCard
+            label={t('common.status.rejected')}
+            value={stats.rejected}
+            tone="red"
+            icon={<XCircle className="h-5 w-5" />}
+            active={statusFilter === 'rejected'}
+            onClick={() => {
+              setStatusFilter('rejected')
+              setPage(1)
+            }}
+          />
+          <StatCard
+            label="Cards Issued"
+            value={stats.cards}
+            tone="gold"
+            icon={<IdCard className="h-5 w-5" />}
+            active={false}
+            onClick={() => {
+              setStatusFilter('approved')
+              setPage(1)
+            }}
+          />
         </section>
 
         {error ? (
@@ -451,14 +558,32 @@ function AdminPage() {
           </div>
         ) : null}
 
-        <section className="admin-members-section rounded-2xl bg-white p-5 shadow-sm">
+        <section className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
+          <div className="mb-5 flex flex-col justify-between gap-3 border-b border-slate-100 pb-5 lg:flex-row lg:items-end">
+            <div>
+              <p className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Membership management
+              </p>
+              <h2 className="mt-3 text-2xl font-black text-slate-950">
+                Member Applications
+              </h2>
+              <p className="mt-1 text-sm font-semibold text-slate-500">
+                Showing {currentStart}-{currentEnd} of {totalCount} records.
+              </p>
+            </div>
+          </div>
+
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_repeat(5,minmax(0,1fr))]">
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              className="input"
-              placeholder={t('admin.searchPlaceholder')}
-            />
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="input pl-10"
+                placeholder={t('admin.searchPlaceholder')}
+              />
+            </div>
 
             <select
               value={statusFilter}
@@ -721,30 +846,56 @@ function StatCard({
   label,
   value,
   tone,
+  icon,
+  active,
+  onClick,
 }: {
   label: string
   value: number
-  tone: 'slate' | 'amber' | 'emerald' | 'red'
+  tone: 'slate' | 'amber' | 'emerald' | 'red' | 'gold'
+  icon: ReactNode
+  active: boolean
+  onClick: () => void
 }) {
   const toneClass = {
     slate: 'bg-slate-50 text-slate-700 ring-slate-200',
     amber: 'bg-amber-50 text-amber-700 ring-amber-200',
     emerald: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
     red: 'bg-red-50 text-red-700 ring-red-200',
+    gold: 'bg-yellow-50 text-yellow-700 ring-yellow-200',
   }[tone]
 
   return (
-    <div className="rounded-2xl bg-white p-5 shadow-sm">
-      <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-[1.5rem] border p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+        active
+          ? 'border-slate-950 bg-slate-950 text-white'
+          : 'border-white/70 bg-white/90 text-slate-950'
+      }`}
+    >
+      <span
+        className={`flex h-11 w-11 items-center justify-center rounded-2xl ring-1 ${
+          active ? 'bg-white/10 text-white ring-white/15' : toneClass
+        }`}
+      >
+        {icon}
+      </span>
+      <span className={`mt-4 block text-xs font-black uppercase tracking-[0.16em] ${
+        active ? 'text-white/60' : 'text-slate-400'
+      }`}>
         {label}
-      </p>
-      <p className="mt-3 text-3xl font-black text-slate-950">
+      </span>
+      <span className="mt-2 block text-3xl font-black">
         {value.toLocaleString('en-PK')}
-      </p>
-      <span className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-bold ring-1 ${toneClass}`}>
+      </span>
+      <span className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-black ring-1 ${
+        active ? 'bg-white/10 text-white ring-white/15' : toneClass
+      }`}>
         Live count
       </span>
-    </div>
+    </button>
   )
 }
 
