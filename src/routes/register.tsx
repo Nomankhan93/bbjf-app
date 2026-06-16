@@ -163,7 +163,6 @@ const talukasByDistrict: Record<string, string[]> = {
 
 const genderOptions = ['Male', 'Female', 'Other', 'Prefer not to say']
 const bloodGroupOptions = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-const designationLevelOptions = ['UC', 'City', 'Taluka', 'District', 'Divisional', 'Provincial']
 
 type MemberStatus = 'pending' | 'approved' | 'rejected'
 
@@ -186,9 +185,6 @@ type ExistingMember = {
   district: string
   taluka: string | null
   profession: string | null
-  designation: string | null
-  designation_level: string | null
-  designation_area: string | null
   caste_branch: string | null
   photo_url: string
 }
@@ -201,9 +197,6 @@ type RegisterFormState = {
   district: string
   taluka: string
   profession: string
-  designation: string
-  designationLevel: string
-  designationArea: string
   casteBranch: string
   address: string
   dateOfBirth: string
@@ -228,9 +221,6 @@ const initialForm: RegisterFormState = {
   district: '',
   taluka: '',
   profession: '',
-  designation: '',
-  designationLevel: '',
-  designationArea: '',
   casteBranch: '',
   address: '',
   dateOfBirth: '',
@@ -265,17 +255,7 @@ const formSteps: Array<{
     titleKey: 'register.step.profile.title',
     shortTitleKey: 'register.step.profile.short',
     descriptionKey: 'register.step.profile.desc',
-    fields: [
-      'profession',
-      'designation',
-      'designationLevel',
-      'designationArea',
-      'casteBranch',
-      'dateOfBirth',
-      'gender',
-      'education',
-      'bloodGroup',
-    ],
+    fields: ['profession', 'casteBranch', 'dateOfBirth', 'gender', 'education', 'bloodGroup'],
   },
   {
     titleKey: 'register.step.emergency.title',
@@ -384,9 +364,6 @@ function RegisterPage() {
           'district',
           'taluka',
           'profession',
-          'designation',
-          'designation_level',
-          'designation_area',
           'caste_branch',
           'photo_url',
         ].join(', '),
@@ -670,9 +647,6 @@ function RegisterPage() {
       district: form.district,
       taluka: form.taluka,
       profession: optionalText(form.profession),
-      designation: optionalText(form.designation),
-      designation_level: optionalText(form.designationLevel),
-      designation_area: optionalText(form.designationArea),
       caste_branch: optionalText(form.casteBranch),
       address: form.address.trim(),
       date_of_birth: form.dateOfBirth || null,
@@ -776,57 +750,11 @@ function RegisterPage() {
       errors.address = t('register.error.addressRequired')
     }
 
-    const requiredMessage = 'This field is required.'
-
-    if (!form.profession.trim()) {
-      errors.profession = requiredMessage
-    }
-
-    if (!form.designation.trim()) {
-      errors.designation = requiredMessage
-    }
-
-    if (!form.designationLevel) {
-      errors.designationLevel = requiredMessage
-    }
-
-    if (!form.designationArea.trim()) {
-      errors.designationArea = requiredMessage
-    }
-
-    if (!form.casteBranch.trim()) {
-      errors.casteBranch = requiredMessage
-    }
-
-    if (!form.dateOfBirth) {
-      errors.dateOfBirth = requiredMessage
-    } else if (form.dateOfBirth > todayDate()) {
+    if (form.dateOfBirth && form.dateOfBirth > todayDate()) {
       errors.dateOfBirth = t('register.error.dobFuture')
     }
 
-    if (!form.gender) {
-      errors.gender = requiredMessage
-    }
-
-    if (!form.education.trim()) {
-      errors.education = requiredMessage
-    }
-
-    if (!form.bloodGroup) {
-      errors.bloodGroup = requiredMessage
-    }
-
-    if (!form.emergencyContactName.trim()) {
-      errors.emergencyContactName = requiredMessage
-    }
-
-    if (!form.emergencyContactRelation.trim()) {
-      errors.emergencyContactRelation = requiredMessage
-    }
-
-    if (!normalizedEmergencyMobile) {
-      errors.emergencyContactMobile = requiredMessage
-    } else if (!isPakistaniMobile(normalizedEmergencyMobile)) {
+    if (normalizedEmergencyMobile && !isPakistaniMobile(normalizedEmergencyMobile)) {
       errors.emergencyContactMobile =
         t('register.error.emergencyMobileInvalid')
     }
@@ -1038,7 +966,6 @@ function RegisterPage() {
             <Field
               name="profession"
               label={t('register.field.profession')}
-              required
               error={fieldErrors.profession}
             >
               <input
@@ -1055,71 +982,8 @@ function RegisterPage() {
             </Field>
 
             <Field
-              name="designation"
-              label={t('register.field.designation')}
-              required
-              error={fieldErrors.designation}
-            >
-              <input
-                id="designation"
-                value={form.designation}
-                onChange={(event) => updateField('designation', event.target.value)}
-                disabled={locked}
-                className="reg-input"
-                placeholder={t('register.placeholder.designation')}
-                autoComplete="organization-title"
-                aria-invalid={Boolean(fieldErrors.designation)}
-                aria-describedby={getDescriptionIds('designation')}
-              />
-            </Field>
-
-            <Field
-              name="designationLevel"
-              label={t('register.field.designationLevel')}
-              required
-              error={fieldErrors.designationLevel}
-            >
-              <select
-                id="designationLevel"
-                value={form.designationLevel}
-                onChange={(event) => updateField('designationLevel', event.target.value)}
-                disabled={locked}
-                className="reg-input reg-select"
-                aria-invalid={Boolean(fieldErrors.designationLevel)}
-                aria-describedby={getDescriptionIds('designationLevel')}
-              >
-                <option value="">{t('register.placeholder.designationLevel')}</option>
-                {designationLevelOptions.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field
-              name="designationArea"
-              label={t('register.field.designationArea')}
-              required
-              error={fieldErrors.designationArea}
-            >
-              <input
-                id="designationArea"
-                value={form.designationArea}
-                onChange={(event) => updateField('designationArea', event.target.value)}
-                disabled={locked}
-                className="reg-input"
-                placeholder={t('register.placeholder.designationArea')}
-                autoComplete="address-level2"
-                aria-invalid={Boolean(fieldErrors.designationArea)}
-                aria-describedby={getDescriptionIds('designationArea')}
-              />
-            </Field>
-
-            <Field
               name="casteBranch"
               label={t('register.field.casteBranch')}
-              required
               error={fieldErrors.casteBranch}
             >
               <input
@@ -1138,7 +1002,6 @@ function RegisterPage() {
             <Field
               name="dateOfBirth"
               label={t('register.field.dateOfBirth')}
-              required
               error={fieldErrors.dateOfBirth}
             >
               <input
@@ -1157,7 +1020,6 @@ function RegisterPage() {
             <Field
               name="gender"
               label={t('register.field.gender')}
-              required
               error={fieldErrors.gender}
             >
               <select
@@ -1181,7 +1043,6 @@ function RegisterPage() {
             <Field
               name="education"
               label={t('register.field.education')}
-              required
               error={fieldErrors.education}
             >
               <input
@@ -1200,7 +1061,6 @@ function RegisterPage() {
             <Field
               name="bloodGroup"
               label={t('register.field.bloodGroup')}
-              required
               error={fieldErrors.bloodGroup}
             >
               <select
@@ -1235,7 +1095,6 @@ function RegisterPage() {
             <Field
               name="emergencyContactName"
               label={t('register.field.contactName')}
-              required
               error={fieldErrors.emergencyContactName}
             >
               <input
@@ -1256,7 +1115,6 @@ function RegisterPage() {
             <Field
               name="emergencyContactRelation"
               label={t('register.field.relation')}
-              required
               error={fieldErrors.emergencyContactRelation}
             >
               <input
@@ -1277,7 +1135,6 @@ function RegisterPage() {
             <Field
               name="emergencyContactMobile"
               label={t('register.field.contactMobile')}
-              required
               hint={t('register.hint.emergencyMobile')}
               error={fieldErrors.emergencyContactMobile}
             >
@@ -1697,9 +1554,6 @@ function memberToForm(data: ExistingMember): RegisterFormState {
     district: data.district,
     taluka: data.taluka ?? '',
     profession: data.profession ?? '',
-    designation: data.designation ?? '',
-    designationLevel: data.designation_level ?? '',
-    designationArea: data.designation_area ?? '',
     casteBranch: data.caste_branch ?? '',
     address: data.address ?? '',
     dateOfBirth: data.date_of_birth ?? '',

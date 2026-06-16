@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import {
   BadgeCheck,
+  BriefcaseBusiness,
   ClipboardList,
   Clock3,
   Download,
@@ -95,6 +96,12 @@ export const adminNavigationGroups: AdminNavigationGroup[] = [
         description: 'Approve or reject from detail page',
         to: '/admin',
         icon: <ClipboardList size={17} />,
+      },
+      {
+        label: 'Assign Designations',
+        description: 'Open approved member detail and assign official card title',
+        to: '/admin',
+        icon: <BriefcaseBusiness size={17} />,
       },
     ],
   },

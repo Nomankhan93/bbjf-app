@@ -108,7 +108,7 @@ function HomePage() {
           <FeatureCard
             icon={<ClipboardCheck className="h-6 w-6" />}
             title="Membership Form"
-            text="Collects member identity, area, designation and contact details in a clean mobile-first flow."
+            text="Collects member identity, area and contact details in a clean mobile-first flow. Official designations are assigned by admin after approval."
           />
           <FeatureCard
             icon={<ShieldCheck className="h-6 w-6" />}
