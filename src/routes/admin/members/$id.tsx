@@ -120,6 +120,10 @@ function AdminMemberDetailPage() {
 
   const canOpenCard = member?.status === 'approved' && Boolean(member.member_no)
 
+  function getAdminCardHref(memberId: string) {
+    return `/admin/members/${memberId}/card`
+  }
+
   useEffect(() => {
     void loadMember()
   }, [id])
@@ -580,13 +584,12 @@ function AdminMemberDetailPage() {
                 </button>
 
                 {canOpenCard ? (
-                  <Link
-                    to="/admin/members/$id/card"
-                    params={{ id: member.id }}
+                  <a
+                    href={getAdminCardHref(member.id)}
                     className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-black text-white no-underline hover:bg-black"
                   >
                     {t('admin.detail.openCard')}
-                  </Link>
+                  </a>
                 ) : null}
               </div>
             </div>
@@ -1036,13 +1039,12 @@ function CardPreviewPanel({
       </p>
 
       {canOpenCard ? (
-        <Link
-          to="/admin/members/$id/card"
-          params={{ id: member.id }}
+        <a
+          href={`/admin/members/${member.id}/card`}
           className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-slate-950 px-4 py-3 text-sm font-black text-white no-underline hover:bg-black"
         >
           Open Card Preview
-        </Link>
+        </a>
       ) : (
         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-900">
           Card preview becomes available after approval and member number issuance.
