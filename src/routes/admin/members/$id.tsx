@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { AdminShell } from '../../../components/admin/AdminShell'
 import {
@@ -99,6 +99,10 @@ function AdminMemberDetailPage() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
   const { t, direction, language } = useI18n()
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  })
+  const isCardChildRoute = pathname === `/admin/members/${id}/card`
 
   const [member, setMember] = useState<Member | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
@@ -120,13 +124,11 @@ function AdminMemberDetailPage() {
 
   const canOpenCard = member?.status === 'approved' && Boolean(member.member_no)
 
-  function getAdminCardHref(memberId: string) {
-    return `/admin/members/${memberId}/card`
-  }
-
   useEffect(() => {
+    if (isCardChildRoute) return
+
     void loadMember()
-  }, [id])
+  }, [id, isCardChildRoute])
 
   useEffect(() => {
     return () => {
@@ -135,6 +137,10 @@ function AdminMemberDetailPage() {
       }
     }
   }, [editPhotoPreview])
+
+  if (isCardChildRoute) {
+    return <Outlet />
+  }
 
   async function loadMember(options?: { keepEditMode?: boolean }) {
     setLoading(true)
@@ -584,12 +590,13 @@ function AdminMemberDetailPage() {
                 </button>
 
                 {canOpenCard ? (
-                  <a
-                    href={getAdminCardHref(member.id)}
+                  <Link
+                    to="/admin/members/$id/card"
+                    params={{ id: member.id }}
                     className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-black text-white no-underline hover:bg-black"
                   >
                     {t('admin.detail.openCard')}
-                  </a>
+                  </Link>
                 ) : null}
               </div>
             </div>
@@ -1039,12 +1046,13 @@ function CardPreviewPanel({
       </p>
 
       {canOpenCard ? (
-        <a
-          href={`/admin/members/${member.id}/card`}
+        <Link
+          to="/admin/members/$id/card"
+          params={{ id: member.id }}
           className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-slate-950 px-4 py-3 text-sm font-black text-white no-underline hover:bg-black"
         >
           Open Card Preview
-        </a>
+        </Link>
       ) : (
         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-900">
           Card preview becomes available after approval and member number issuance.
