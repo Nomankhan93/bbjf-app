@@ -56,7 +56,8 @@ export const MembershipCard = forwardRef<HTMLDivElement, MembershipCardProps>(
     return (
       <div
         ref={ref}
-        className="mx-auto w-full max-w-5xl space-y-5 rounded-[2rem] bg-white p-4 shadow-2xl ring-1 ring-slate-200"
+        className="mx-auto space-y-5 rounded-[2rem] bg-white p-4 shadow-2xl ring-1 ring-slate-200"
+        style={{ width: CARD_EXPORT_WIDTH + 32 }}
       >
         <CardFront
           ref={frontRef}
@@ -131,7 +132,7 @@ const CardFront = forwardRef<HTMLElement, {
         </div>
       </div>
 
-      <div className="relative grid gap-6 p-6 md:grid-cols-[220px_minmax(0,1fr)_220px]">
+      <div className="relative grid grid-cols-[220px_minmax(0,1fr)_220px] gap-6 p-6">
         <aside className="space-y-4">
           <div className="rounded-[1.65rem] bg-gradient-to-br from-red-600 via-white to-green-600 p-[4px] shadow-lg">
             {photoUrl ? (
@@ -169,7 +170,7 @@ const CardFront = forwardRef<HTMLElement, {
             <div className="mt-4 h-[3px] w-28 rounded-full bg-gradient-to-r from-red-600 via-black to-green-600" />
           </div>
 
-          <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
             <Info label={t('card.fatherName')} value={member.father_name} />
             <Info label={t('dashboard.designation')} value={member.designation} />
             <Info label={t('dashboard.designationLevel')} value={member.designation_level} />
@@ -259,14 +260,14 @@ const CardBack = forwardRef<HTMLElement, {
         </div>
       </div>
 
-      <div className="relative grid gap-5 p-5 md:grid-cols-[minmax(0,1fr)_260px]">
+      <div className="relative grid grid-cols-[minmax(0,1fr)_260px] gap-5 p-5">
         <main className="space-y-4">
           <section className="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm">
             <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-950">
               {t('card.back.memberInfo')}
             </h3>
 
-            <div className="mt-4 grid gap-x-5 gap-y-3 sm:grid-cols-3">
+            <div className="mt-4 grid grid-cols-3 gap-x-5 gap-y-3">
               <Info label={t('card.memberNo')} value={member.member_no} />
               <Info label={t('dashboard.cnic')} value={formatCnic(member.cnic)} />
               <Info label={t('card.mobile')} value={formatMobile(member.mobile)} />
@@ -295,7 +296,7 @@ const CardBack = forwardRef<HTMLElement, {
             <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-950">
               {t('card.back.terms')}
             </h3>
-            <ol className="mt-3 grid gap-2 text-xs font-semibold leading-5 text-slate-700 sm:grid-cols-2">
+            <ol className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold leading-5 text-slate-700">
               <li>{t('card.back.term1')}</li>
               <li>{t('card.back.term2')}</li>
               <li>{t('card.back.term3')}</li>
