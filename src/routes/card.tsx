@@ -6,10 +6,10 @@ import {
   BBJF_LEADER_IMAGE_PATH,
   CARD_EXPORT_HEIGHT,
   CARD_EXPORT_WIDTH,
-  MembershipCard,
   type MembershipCardMember,
   imageUrlToDataUrl,
 } from '../components/MembershipCard'
+import { ResponsiveCardPreview } from '../components/ResponsiveCardPreview'
 import { useI18n } from '../lib/i18n'
 import { exportElementAsPng } from '../lib/shared/card-export'
 import { generateQrDataUrl } from '../lib/shared/qrcode'
@@ -21,9 +21,6 @@ export const Route = createFileRoute('/card')({
 
 type Member = MembershipCardMember
 type DownloadTarget = 'front' | 'back' | 'both'
-
-const CARD_STACK_PREVIEW_WIDTH = CARD_EXPORT_WIDTH + 32
-const CARD_STACK_PREVIEW_HEIGHT = CARD_EXPORT_HEIGHT * 2 + 20 + 32
 
 function CardPage() {
   const navigate = useNavigate()
@@ -42,24 +39,9 @@ function CardPage() {
   const [qrUrl, setQrUrl] = useState<string | null>(null)
   const [verifyUrl, setVerifyUrl] = useState('')
   const [error, setError] = useState('')
-  const [previewScale, setPreviewScale] = useState(1)
 
   useEffect(() => {
     void loadCard()
-  }, [])
-
-  useEffect(() => {
-    function updatePreviewScale() {
-      if (typeof window === 'undefined') return
-
-      const availableWidth = Math.max(280, window.innerWidth - 32)
-      setPreviewScale(Math.min(1, availableWidth / CARD_STACK_PREVIEW_WIDTH))
-    }
-
-    updatePreviewScale()
-    window.addEventListener('resize', updatePreviewScale)
-
-    return () => window.removeEventListener('resize', updatePreviewScale)
   }, [])
 
   async function loadCard() {
@@ -216,32 +198,18 @@ function CardPage() {
 
         {member?.status === 'approved' && member.member_no ? (
           <>
-            <section className="card-preview-shell pb-3">
-              <div
-                className="card-preview-viewport"
-                style={{ height: CARD_STACK_PREVIEW_HEIGHT * previewScale }}
-              >
-                <div
-                  className="card-preview-scale"
-                  style={{
-                    width: CARD_STACK_PREVIEW_WIDTH,
-                    transform: `scale(${previewScale})`,
-                  }}
-                >
-                  <MembershipCard
-                    ref={cardRef}
-                    frontRef={frontCardRef}
-                    backRef={backCardRef}
-                    member={member}
-                    photoUrl={photoUrl}
-                    brandIconUrl={brandIconUrl}
-                    leaderImageUrl={leaderImageUrl}
-                    qrUrl={qrUrl}
-                    verifyUrl={verifyUrl}
-                  />
-                </div>
-              </div>
-            </section>
+            <ResponsiveCardPreview
+              className="rounded-[2rem] bg-white p-2 shadow-sm ring-1 ring-slate-200/70 sm:p-4"
+              cardRef={cardRef}
+              frontRef={frontCardRef}
+              backRef={backCardRef}
+              member={member}
+              photoUrl={photoUrl}
+              brandIconUrl={brandIconUrl}
+              leaderImageUrl={leaderImageUrl}
+              qrUrl={qrUrl}
+              verifyUrl={verifyUrl}
+            />
 
             <div className="flex flex-wrap justify-center gap-3">
               <button

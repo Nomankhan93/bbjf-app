@@ -23,10 +23,10 @@ import {
   BBJF_LEADER_IMAGE_PATH,
   CARD_EXPORT_HEIGHT,
   CARD_EXPORT_WIDTH,
-  MembershipCard,
   type MembershipCardMember,
   imageUrlToDataUrl,
 } from '../../../../components/MembershipCard'
+import { ResponsiveCardPreview } from '../../../../components/ResponsiveCardPreview'
 import { useI18n, type TranslationKey } from '../../../../lib/i18n'
 import { exportElementAsPng } from '../../../../lib/shared/card-export'
 import { generateQrDataUrl } from '../../../../lib/shared/qrcode'
@@ -347,23 +347,18 @@ function AdminMemberCardPage() {
         {cardReady ? (
           <>
             <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-              <div className="overflow-hidden rounded-[2rem] bg-white p-3 shadow-sm ring-1 ring-slate-200/70 sm:p-5">
-                <div className="overflow-x-auto pb-3">
-                  <div className="min-w-[1048px]">
-                    <MembershipCard
-                      ref={cardRef}
-                      frontRef={frontCardRef}
-                      backRef={backCardRef}
-                      member={member}
-                      photoUrl={photoUrl}
-                      brandIconUrl={brandIconUrl}
-                      leaderImageUrl={leaderImageUrl}
-                      qrUrl={qrUrl}
-                      verifyUrl={verifyUrl}
-                    />
-                  </div>
-                </div>
-              </div>
+              <ResponsiveCardPreview
+                className="rounded-[2rem] bg-white p-2 shadow-sm ring-1 ring-slate-200/70 sm:p-4"
+                cardRef={cardRef}
+                frontRef={frontCardRef}
+                backRef={backCardRef}
+                member={member}
+                photoUrl={photoUrl}
+                brandIconUrl={brandIconUrl}
+                leaderImageUrl={leaderImageUrl}
+                qrUrl={qrUrl}
+                verifyUrl={verifyUrl}
+              />
 
               <aside className="space-y-4">
                 <div className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-200/70">

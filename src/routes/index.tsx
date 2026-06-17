@@ -39,33 +39,35 @@ function HomePage() {
   const { isLoggedIn, isAdmin } = useAuthRole()
 
   return (
-    <main className="px-4 py-8 md:py-12">
-      <div className="page-wrap space-y-8">
-        <section className="relative isolate overflow-hidden rounded-[2.5rem] border border-white/70 bg-white/85 p-5 shadow-[0_28px_90px_rgba(15,23,42,0.12)] backdrop-blur-xl md:p-8 lg:p-10">
+    <main className="bbjf-home-page px-3 py-6 sm:px-4 md:py-12">
+      <div className="page-wrap bbjf-home-wrap space-y-7 md:space-y-8">
+        <section className="bbjf-home-hero relative isolate overflow-hidden rounded-[2rem] border border-white/70 bg-white/85 p-4 shadow-[0_28px_90px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:p-5 md:rounded-[2.5rem] md:p-8 lg:p-10">
           <div className="absolute -left-24 top-16 h-72 w-72 rounded-full bg-red-500/10 blur-3xl" />
           <div className="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-emerald-500/12 blur-3xl" />
           <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-red-700 via-slate-950 to-emerald-700" />
 
-          <div className="relative z-10 grid items-center gap-9 lg:grid-cols-[0.92fr_1.08fr]">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-3 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-emerald-800">
+          <div className="relative z-10 grid min-w-0 items-center gap-7 lg:grid-cols-[0.92fr_1.08fr] lg:gap-9">
+            <div className="min-w-0 max-w-3xl">
+              <div className="bbjf-home-kicker inline-flex max-w-full items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-800 sm:gap-3 sm:px-4 sm:text-xs sm:tracking-[0.22em]">
                 <img src={BBJF_ICON_PATH} alt="" className="h-6 w-6 rounded-full object-cover" />
                 BBJF Membership Portal
               </div>
 
-              <h1 className="mt-6 text-5xl font-black leading-[0.92] tracking-[-0.06em] text-slate-950 md:text-7xl lg:text-8xl">
-                Digital <span className="text-emerald-700">Membership</span> System
+              <h1 className="bbjf-home-title mt-5 text-[clamp(2.55rem,12vw,3.4rem)] font-black leading-[0.94] tracking-[-0.055em] text-slate-950 sm:mt-6 md:text-7xl lg:text-8xl">
+                <span className="block sm:inline">Digital</span>{' '}
+                <span className="block text-emerald-700 sm:inline">Membership</span>{' '}
+                <span className="block sm:inline">System</span>
               </h1>
 
-              <p className="mt-6 max-w-2xl text-lg font-semibold leading-8 text-slate-600 md:text-xl">
+              <p className="bbjf-home-lede mt-5 max-w-2xl text-[0.98rem] font-semibold leading-7 text-slate-600 sm:text-lg sm:leading-8 md:text-xl">
                 A focused membership portal for BBJF: signup, membership form,
                 admin approval, digital card, QR verification and member dashboard.
               </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="bbjf-home-actions mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row">
                 <Link
                   to={isLoggedIn ? '/dashboard' : '/signup'}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-lg shadow-slate-950/15 no-underline transition hover:-translate-y-0.5 hover:bg-black"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-lg shadow-slate-950/15 no-underline transition hover:-translate-y-0.5 hover:bg-black sm:w-auto sm:px-6"
                 >
                   {isLoggedIn ? 'Open Dashboard' : 'Become a Member'}
                   <ArrowRight className="h-4 w-4" />
@@ -73,7 +75,7 @@ function HomePage() {
 
                 <Link
                   to={isLoggedIn ? '/card' : '/login'}
-                  className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-800 shadow-sm no-underline transition hover:-translate-y-0.5 hover:bg-slate-50"
+                  className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-800 shadow-sm no-underline transition hover:-translate-y-0.5 hover:bg-slate-50 sm:w-auto sm:px-6"
                 >
                   {isLoggedIn ? 'Digital Card' : 'Login'}
                 </Link>
@@ -81,21 +83,21 @@ function HomePage() {
                 {isLoggedIn && isAdmin ? (
                   <Link
                     to="/admin"
-                    className="inline-flex items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-3 text-sm font-black text-emerald-800 shadow-sm no-underline transition hover:-translate-y-0.5 hover:bg-emerald-100"
+                    className="inline-flex w-full items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-black text-emerald-800 shadow-sm no-underline transition hover:-translate-y-0.5 hover:bg-emerald-100 sm:w-auto sm:px-6"
                   >
                     Admin Panel
                   </Link>
                 ) : null}
               </div>
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              <div className="bbjf-home-steps mt-7 grid gap-3 sm:mt-8 sm:grid-cols-3">
                 <MiniMetric icon={<UsersRound className="h-5 w-5" />} label="Step 01" value="Signup" />
                 <MiniMetric icon={<ClipboardCheck className="h-5 w-5" />} label="Step 02" value="Admin Review" />
                 <MiniMetric icon={<IdCard className="h-5 w-5" />} label="Step 03" value="QR Card" />
               </div>
             </div>
 
-            <div className="relative">
+            <div className="relative min-w-0">
               <div className="absolute -inset-5 rounded-[2.5rem] bg-gradient-to-br from-red-500/12 via-white/0 to-emerald-500/14 blur-2xl" />
               <HomePhotoSlider />
               <FloatingBadge className="left-4 top-4" icon={<ShieldCheck className="h-4 w-4" />} label="Secure Review" />
@@ -170,8 +172,8 @@ function HomePhotoSlider() {
   const slide = HOME_SLIDES[activeSlide]
 
   return (
-    <div className="relative overflow-hidden rounded-[2.2rem] border border-white/60 bg-slate-950 shadow-[0_30px_90px_rgba(15,23,42,0.30)]">
-      <div className="relative aspect-[4/3] min-h-[340px] sm:min-h-[430px] lg:min-h-[560px]">
+    <div className="bbjf-photo-slider relative overflow-hidden rounded-[1.7rem] border border-white/60 bg-slate-950 shadow-[0_30px_90px_rgba(15,23,42,0.30)] md:rounded-[2.2rem]">
+      <div className="relative aspect-[4/3] min-h-[280px] sm:min-h-[430px] lg:min-h-[560px]">
         {HOME_SLIDES.map((item, index) => (
           <img
             key={item.src}

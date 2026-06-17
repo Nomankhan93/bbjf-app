@@ -102,7 +102,7 @@ export function Header({ compact }: { compact: boolean }) {
   return (
     <header
       ref={headerRef}
-      className={`sticky top-0 z-40 border-b border-white/70 bg-[#f8f4ee]/90 backdrop-blur-xl ${
+      className={`site-header sticky top-0 z-40 border-b border-white/70 bg-[#f8f4ee]/90 backdrop-blur-xl ${
         compact ? 'shadow-sm' : ''
       }`}
     >

@@ -33,10 +33,24 @@
 }
 
 html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@supports not (overflow-x: clip) {
+  html {
+    overflow-x: hidden;
+  }
 }
 
 body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   margin: 0;
   color: var(--sea-ink);
   background:
@@ -47,6 +61,18 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+@supports not (overflow-x: clip) {
+  body {
+    overflow-x: hidden;
+  }
+}
+
+#main-content {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 a {
@@ -622,6 +648,40 @@ img {
   font-weight: 950;
 }
 
+
+/* Mobile/PWA width hardening for Android Chrome and iOS Safari */
+.bbjf-home-page,
+.bbjf-home-wrap,
+.bbjf-home-hero,
+.bbjf-home-hero * {
+  min-width: 0;
+}
+
+.bbjf-home-page {
+  max-width: 100%;
+  overflow-x: clip;
+  padding-left: max(0.75rem, env(safe-area-inset-left));
+  padding-right: max(0.75rem, env(safe-area-inset-right));
+}
+
+.bbjf-home-title,
+.bbjf-home-lede,
+.bbjf-home-kicker {
+  overflow-wrap: anywhere;
+}
+
+.bbjf-home-kicker {
+  white-space: normal;
+}
+
+.bbjf-home-kicker img {
+  flex: 0 0 auto;
+}
+
+.bbjf-home-actions > a {
+  min-width: 0;
+}
+
 @media (max-width: 768px) {
   .bbjf-photo-slider {
     transform: none;
@@ -1150,6 +1210,7 @@ body [dir] {
 .card-preview-shell {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -1157,20 +1218,16 @@ body [dir] {
   position: relative;
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   overflow: hidden;
+  touch-action: pan-y pinch-zoom;
 }
 
 .card-preview-scale {
   position: absolute;
-  left: 50%;
   top: 0;
   transform-origin: top left;
-  margin-left: calc(-1 * var(--card-preview-offset, 0px));
-}
-
-.card-preview-scale {
-  left: 0;
-  margin-left: 0;
+  will-change: transform;
 }
 
 @media (max-width: 768px) {
@@ -1304,6 +1361,36 @@ body [dir] {
   }
 }
 
+
+@media (max-width: 768px) {
+  .bbjf-home-wrap.page-wrap {
+    padding-inline: 0;
+  }
+
+  .bbjf-home-hero {
+    border-radius: 1.65rem !important;
+  }
+
+  .bbjf-home-title {
+    max-width: 100%;
+    font-size: clamp(2.35rem, 11.3vw, 3.05rem) !important;
+    line-height: 0.98 !important;
+    letter-spacing: -0.045em !important;
+  }
+
+  .bbjf-home-lede {
+    max-width: 100%;
+  }
+
+  .bbjf-home-steps > div {
+    width: 100%;
+  }
+
+  .card-preview-shell {
+    border-radius: 1.4rem !important;
+  }
+}
+
 @media (max-width: 420px) {
   .page-wrap {
     padding-inline: 0.65rem;
@@ -1348,5 +1435,21 @@ body [dir] {
 
   .bbjf-hero-card h1 {
     font-size: clamp(2.1rem, 11vw, 2.8rem) !important;
+  }
+}
+
+
+@media (max-width: 420px) {
+  .bbjf-home-page {
+    padding-left: max(0.55rem, env(safe-area-inset-left));
+    padding-right: max(0.55rem, env(safe-area-inset-right));
+  }
+
+  .bbjf-home-kicker {
+    letter-spacing: 0.1em !important;
+  }
+
+  .bbjf-home-title {
+    font-size: clamp(2.15rem, 10.8vw, 2.75rem) !important;
   }
 }

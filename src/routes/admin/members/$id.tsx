@@ -99,10 +99,8 @@ function AdminMemberDetailPage() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
   const { t, direction, language } = useI18n()
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  })
-  const isCardChildRoute = pathname === `/admin/members/${id}/card`
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const isCardChildRoute = pathname.endsWith(`/admin/members/${id}/card`)
 
   const [member, setMember] = useState<Member | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
