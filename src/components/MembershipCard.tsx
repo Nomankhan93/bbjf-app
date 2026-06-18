@@ -97,6 +97,7 @@ const CardFront = forwardRef<HTMLElement, {
   ref,
 ) {
   const { t, direction, language } = useI18n()
+  const expiryDate = formatExpiryDate(member.approved_at, language)
 
   return (
     <section
@@ -184,6 +185,10 @@ const CardFront = forwardRef<HTMLElement, {
               value={formatDate(member.approved_at, language)}
             />
             <Info
+              label={t('card.expiryDate')}
+              value={expiryDate}
+            />
+            <Info
               label={t('admin.table.status')}
               value={statusLabel(member.status, t)}
             />
@@ -194,7 +199,9 @@ const CardFront = forwardRef<HTMLElement, {
               Verification Notice
             </p>
             <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">
-              This card is valid only when the QR verification page confirms the current membership status.
+              {expiryDate
+                ? t('card.validityNoticeWithExpiry').replace('{date}', expiryDate)
+                : t('card.validityNotice')}
             </p>
           </div>
         </main>
@@ -231,6 +238,7 @@ const CardBack = forwardRef<HTMLElement, {
   ref,
 ) {
   const { t, direction, language } = useI18n()
+  const expiryDate = formatExpiryDate(member.approved_at, language)
 
   return (
     <section
@@ -316,6 +324,7 @@ const CardBack = forwardRef<HTMLElement, {
                 <MiniInfo label={t('dashboard.cnic')} value={formatCnic(member.cnic)} />
                 <MiniInfo label={t('card.mobile')} value={formatMobile(member.mobile)} />
                 <MiniInfo label={t('card.caste')} value={member.caste_branch} />
+                <MiniInfo label={t('card.expiryDate')} value={expiryDate} />
               </div>
             </BackPanel>
 
@@ -362,11 +371,13 @@ const CardBack = forwardRef<HTMLElement, {
               </p>
             </BackPanel>
           </main>
-        </div>      </div>
+        </div>
+      </div>
 
       <footer className="shrink-0 border-t border-slate-200 bg-slate-50 px-6 py-2">
         <p className="text-[10.5px] font-semibold leading-4 text-slate-500">
           {t('card.back.validActive')}
+          {expiryDate ? ` ${t('card.back.expiryNotice').replace('{date}', expiryDate)}` : ''}
         </p>
       </footer>
     </section>
@@ -534,6 +545,18 @@ function Info({
       </p>
     </div>
   )
+}
+
+function formatExpiryDate(value: string | null | undefined, language: string) {
+  if (!value) return null
+
+  const approvedDate = new Date(value)
+  if (Number.isNaN(approvedDate.getTime())) return null
+
+  const expiryDate = new Date(approvedDate)
+  expiryDate.setFullYear(expiryDate.getFullYear() + 1)
+
+  return formatDate(expiryDate.toISOString(), language)
 }
 
 function formatDate(value: string | null | undefined, language: string) {
