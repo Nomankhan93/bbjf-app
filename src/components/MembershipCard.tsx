@@ -1,4 +1,4 @@
-import { forwardRef, type CSSProperties, type Ref } from 'react'
+import { forwardRef, type CSSProperties, type ReactNode, type Ref } from 'react'
 import { useI18n } from '../lib/i18n'
 
 export const APP_NAME = 'Bilawal Bhutto Jayala Federation'
@@ -32,6 +32,9 @@ export type MembershipCardMember = {
   designation_level: string | null
   designation_area: string | null
   caste_branch: string | null
+  emergency_contact_name: string | null
+  emergency_contact_relation: string | null
+  emergency_contact_mobile: string | null
   photo_url?: string | null
   status: 'pending' | 'approved' | 'rejected'
   approved_at: string | null
@@ -229,127 +232,186 @@ const CardBack = forwardRef<HTMLElement, {
   ref,
 ) {
   const { t, direction, language } = useI18n()
+  const verificationUrl =
+    formatVerifyUrlForDisplay(verifyUrl) || t('card.back.verifyUrlUnavailable')
 
   return (
     <section
       ref={ref}
-      className="relative isolate overflow-hidden rounded-[1.75rem] border border-slate-900/10 bg-white shadow-xl"
+      className="relative isolate flex flex-col overflow-hidden rounded-[1.75rem] border border-slate-900/10 bg-white shadow-xl"
       dir={direction}
       style={CARD_SIDE_STYLE}
     >
-      <CardWatermark brandIconUrl={brandIconUrl} />
-
-      <div className="relative overflow-hidden bg-slate-950 px-7 py-6 text-white">
+      <header className="relative h-[142px] shrink-0 overflow-hidden bg-slate-950 px-6 py-5 text-white">
         <FlagStripes />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-black/45 to-black/25" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/15 via-black/55 to-black/20" />
+        <div className="absolute right-0 top-0 h-36 w-36 rounded-bl-full bg-white/10" />
+        <div className="absolute inset-x-0 bottom-0 h-[4px] bg-gradient-to-r from-red-700 via-black to-green-700" />
 
-        <div className="relative flex flex-wrap items-start justify-between gap-5">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.34em] text-white/75">
-              {t('card.back.sideLabel')}
-            </p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight">
-              {t('card.back.title')}
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm font-semibold text-white/80">
-              {t('card.back.validity')}
-            </p>
+        <div className="relative flex h-full items-start justify-between gap-5">
+          <div className="flex min-w-0 items-start gap-4">
+            <LogoMark brandIconUrl={brandIconUrl} compact />
+
+            <div className="min-w-0 max-w-[640px]">
+              <p className="text-[11px] font-black uppercase tracking-[0.34em] text-white/75">
+                {APP_SHORT_NAME} · {t('card.back.sideLabel')}
+              </p>
+              <h2 className="mt-2 whitespace-nowrap text-[36px] font-black uppercase leading-none tracking-tight text-white">
+                {t('card.back.cardholderDetails')}
+              </h2>
+              <p className="mt-2 text-[13px] font-semibold leading-5 text-white/80">
+                {t('card.back.detailsSubtitle')}
+              </p>
+            </div>
           </div>
 
-          <LogoMark brandIconUrl={brandIconUrl} compact />
+          <div className="min-w-[132px] rounded-2xl border border-yellow-300/80 bg-yellow-300 px-4 py-3 text-center text-[13px] font-black uppercase tracking-wide text-slate-950 shadow-lg">
+            {t('card.back.cardDetails')}
+          </div>
+        </div>
+      </header>
+
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-white">
+        <CardWatermark brandIconUrl={brandIconUrl} />
+
+        <div className="relative grid h-full min-h-0 grid-cols-[minmax(0,1fr)_220px] gap-4 p-4">
+          <main className="grid h-full min-h-0 grid-cols-2 grid-rows-[1fr_1.05fr_1.25fr] gap-3">
+            <BackPanel title={t('card.back.residentialAddress')} tone="gold">
+              <p className="line-clamp-3 break-words text-[14px] font-black leading-snug text-slate-950">
+                {member.address || t('common.notProvided')}
+              </p>
+              <p className="mt-2 break-words text-[12px] font-bold text-slate-800">
+                {[member.taluka, member.district].filter(Boolean).join(', ') ||
+                  t('common.notProvided')}
+              </p>
+            </BackPanel>
+
+            <BackPanel title={t('card.back.emergencyContact')}>
+              {member.emergency_contact_name || member.emergency_contact_mobile ? (
+                <>
+                  <p className="line-clamp-1 break-words text-[14px] font-black text-slate-950">
+                    {member.emergency_contact_name || t('common.notProvided')}
+                  </p>
+                  <p className="mt-1 text-[12px] font-bold text-slate-700">
+                    {member.emergency_contact_relation || t('common.notProvided')}
+                  </p>
+                  <p className="mt-1 text-[14px] font-black text-slate-950">
+                    {formatMobile(member.emergency_contact_mobile) || t('common.notProvided')}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[13px] font-black text-slate-950">
+                  {t('common.notProvided')}
+                </p>
+              )}
+            </BackPanel>
+
+            <BackPanel title={t('card.back.memberInfo')} contentClassName="flex items-center">
+              <div className="grid w-full grid-cols-3 gap-x-3 gap-y-2">
+                <MiniInfo label={t('card.back.dob')} value={formatDate(member.date_of_birth, language)} />
+                <MiniInfo label={t('dashboard.gender')} value={member.gender} />
+                <MiniInfo label={t('card.back.blood')} value={member.blood_group} />
+                <MiniInfo label={t('dashboard.education')} value={member.education} />
+                <MiniInfo label={t('dashboard.designation')} value={member.designation || 'Member'} />
+                <MiniInfo label={t('dashboard.cnic')} value={formatCnic(member.cnic)} />
+                <MiniInfo label={t('card.mobile')} value={formatMobile(member.mobile)} />
+                <MiniInfo label={t('card.caste')} value={member.caste_branch} />
+              </div>
+            </BackPanel>
+
+            <BackPanel title={t('card.back.verificationInstructions')}>
+              <p>{t('card.back.scanInstruction')}</p>
+              <p className="mt-1">{t('card.back.matchInstruction')}</p>
+            </BackPanel>
+
+            <BackPanel title={t('card.back.terms')}>
+              <ul className="list-disc space-y-1 pl-4">
+                <li>{t('card.back.term1').replace(/^\d+\.\s*/, '')}</li>
+                <li>{t('card.back.term2').replace(/^\d+\.\s*/, '')}</li>
+                <li>{t('card.back.term3').replace(/^\d+\.\s*/, '')}</li>
+              </ul>
+            </BackPanel>
+
+            <BackPanel
+              title={t('card.back.issuingAuthority')}
+              tone="dark"
+              contentClassName="flex flex-1 flex-col justify-end"
+            >
+              <div className="flex h-[70px] items-center justify-center overflow-hidden rounded-2xl bg-white/85 px-3 text-center ring-1 ring-slate-200">
+                <p className="text-[18px] font-black uppercase tracking-[0.12em] text-slate-950">
+                  {t('card.back.issuedElectronically')}
+                </p>
+              </div>
+
+              <div className="mt-2 h-[2px] w-full bg-slate-500" />
+
+              <p className="mt-2 text-[15px] font-black leading-none text-slate-950">
+                {t('card.back.authorizedSignature')}
+              </p>
+              <p className="mt-1 text-[11px] font-black uppercase tracking-[0.08em] text-slate-600">
+                {t('card.back.digitalOffice')}
+              </p>
+            </BackPanel>
+          </main>
+
+          <aside className="flex h-full min-h-0 flex-col justify-between gap-3 rounded-[1.45rem] border border-slate-200 bg-white/95 p-3 shadow-lg">
+            <div className="rounded-2xl border border-yellow-400 bg-slate-950 px-3 py-3 text-center shadow-sm">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-yellow-300">
+                {t('card.back.issueNoVersion')}
+              </p>
+              <p className="mt-1 break-all text-[13px] font-black text-white">
+                {member.member_no ? `${member.member_no} / v1` : `Pending / v1`}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-white p-2 text-center shadow-sm ring-1 ring-slate-200">
+              {qrUrl ? (
+                <img
+                  src={qrUrl}
+                  alt={t('card.front.qrAlt')}
+                  className="mx-auto h-[148px] w-[148px] rounded-xl bg-white p-1"
+                  draggable={false}
+                />
+              ) : (
+                <div className="mx-auto flex h-[148px] w-[148px] items-center justify-center rounded-xl bg-slate-100 text-[11px] font-bold text-slate-500 ring-1 ring-slate-200">
+                  {t('card.back.verifyUrlUnavailable')}
+                </div>
+              )}
+
+              <p className="mt-2 text-center text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
+                {t('card.scanToVerifyTitle')}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+                {t('card.back.verificationUrl')}
+              </p>
+              <p className="mt-1 line-clamp-3 break-all text-[10px] font-bold leading-4 text-slate-950">
+                {verificationUrl}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-yellow-300 bg-yellow-50 p-3">
+              <p className="text-[10px] font-black uppercase tracking-wide text-yellow-800">
+                {t('card.back.organization')}
+              </p>
+              <p className="mt-1 text-[12px] font-black leading-4 text-slate-950">
+                {APP_NAME}
+              </p>
+              <p className="text-[10px] font-semibold text-slate-600">
+                {t('card.back.organizationLocation')}
+              </p>
+            </div>
+          </aside>
         </div>
       </div>
 
-      <div className="relative grid grid-cols-[minmax(0,1fr)_260px] gap-5 p-5">
-        <main className="space-y-4">
-          <section className="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-            <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-950">
-              {t('card.back.memberInfo')}
-            </h3>
-
-            <div className="mt-4 grid grid-cols-3 gap-x-5 gap-y-3">
-              <Info label={t('card.memberNo')} value={member.member_no} />
-              <Info label={t('dashboard.cnic')} value={formatCnic(member.cnic)} />
-              <Info label={t('card.mobile')} value={formatMobile(member.mobile)} />
-              <Info label={t('dashboard.district')} value={member.district} />
-              <Info label={t('card.talukaTown')} value={member.taluka} />
-              <Info
-                label={t('dashboard.dateOfBirth')}
-                value={formatDate(member.date_of_birth, language)}
-              />
-              <Info label={t('dashboard.bloodGroup')} value={member.blood_group} />
-              <Info label={t('dashboard.profession')} value={member.profession} />
-              <Info label={t('card.caste')} value={member.caste_branch} />
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-slate-200 bg-slate-50/90 p-4 shadow-sm">
-            <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-950">
-              Address
-            </h3>
-            <p className="mt-2 line-clamp-3 break-words text-sm font-bold leading-6 text-slate-700">
-              {member.address || t('common.notProvided')}
-            </p>
-          </section>
-
-          <section className="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-            <h3 className="text-sm font-black uppercase tracking-[0.18em] text-slate-950">
-              {t('card.back.terms')}
-            </h3>
-            <ol className="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold leading-5 text-slate-700">
-              <li>{t('card.back.term1')}</li>
-              <li>{t('card.back.term2')}</li>
-              <li>{t('card.back.term3')}</li>
-              <li>{t('card.back.term4')}</li>
-            </ol>
-          </section>
-        </main>
-
-        <aside className="flex flex-col gap-4">
-          <div className="rounded-3xl border border-slate-200 bg-white/95 p-4 text-center shadow-sm">
-            {qrUrl ? (
-              <img
-                src={qrUrl}
-                alt={t('card.front.qrAlt')}
-                className="mx-auto h-40 w-40 rounded-xl bg-white p-2 ring-1 ring-slate-200"
-                draggable={false}
-              />
-            ) : (
-              <div className="mx-auto h-40 w-40 rounded-xl bg-slate-100 ring-1 ring-slate-200" />
-            )}
-
-            <p className="mt-3 text-xs font-black uppercase tracking-[0.18em] text-slate-500">
-              {t('card.scanToVerifyTitle')}
-            </p>
-            <p className="mt-2 line-clamp-4 break-all text-[11px] font-bold leading-4 text-slate-600">
-              {formatVerifyUrlForDisplay(verifyUrl) || t('card.back.verifyUrlUnavailable')}
-            </p>
-          </div>
-
-          <div className="rounded-3xl bg-slate-950 p-4 text-white shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-white/60">
-              {t('card.back.issuingAuthority')}
-            </p>
-            <p className="mt-2 text-lg font-black">{APP_NAME}</p>
-            <p className="mt-1 text-sm font-semibold text-white/70">
-              {t('card.back.digitalOffice')}
-            </p>
-
-            <div className="mt-5 border-t border-white/25 pt-3">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-white/60">
-                {t('card.back.authorizedSignature')}
-              </p>
-              <p className="mt-2 text-sm font-semibold text-white">
-                {t('card.back.issuedElectronically')}
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-amber-200 bg-amber-50 p-3 text-[11px] font-semibold leading-5 text-amber-900">
-            {t('card.back.officialNotice')}
-          </div>
-        </aside>
-      </div>
+      <footer className="shrink-0 border-t border-slate-200 bg-slate-50 px-6 py-2">
+        <p className="text-[10.5px] font-semibold leading-4 text-slate-500">
+          {t('card.back.validActive')}
+        </p>
+      </footer>
     </section>
   )
 })
@@ -416,6 +478,62 @@ function statusLabel(
   if (status === 'approved') return t('common.status.approved')
   if (status === 'rejected') return t('common.status.rejected')
   return t('common.status.pending')
+}
+
+
+function MiniInfo({
+  label,
+  value,
+}: {
+  label: string
+  value: string | null | undefined
+}) {
+  const { t } = useI18n()
+
+  return (
+    <div className="min-w-0">
+      <p className="text-[9px] font-black uppercase tracking-wide text-emerald-800">
+        {label}
+      </p>
+      <p className="mt-0.5 line-clamp-2 break-words text-[11px] font-black leading-[1.15] text-slate-950">
+        {value || t('common.notProvided')}
+      </p>
+    </div>
+  )
+}
+
+function BackPanel({
+  title,
+  children,
+  tone = 'light',
+  contentClassName = '',
+}: {
+  title: string
+  children: ReactNode
+  tone?: 'light' | 'gold' | 'dark'
+  contentClassName?: string
+}) {
+  const toneClass =
+    tone === 'gold'
+      ? 'border-yellow-300 bg-yellow-50/95'
+      : tone === 'dark'
+        ? 'border-slate-300 bg-slate-50/95'
+        : 'border-slate-200 bg-white/90'
+
+  return (
+    <section
+      className={`flex min-h-0 flex-col overflow-hidden rounded-[1.05rem] border p-3 shadow-sm ${toneClass}`}
+    >
+      <h3 className="shrink-0 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-800">
+        {title}
+      </h3>
+      <div
+        className={`mt-2 min-h-0 text-[12px] font-semibold leading-[1.35] text-slate-700 ${contentClassName}`}
+      >
+        {children}
+      </div>
+    </section>
+  )
 }
 
 function CardWatermark({ brandIconUrl }: { brandIconUrl: string | null }) {
