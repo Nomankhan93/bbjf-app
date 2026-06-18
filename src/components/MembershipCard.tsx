@@ -340,18 +340,18 @@ const CardBack = forwardRef<HTMLElement, {
               tone="dark"
               contentClassName="flex flex-1 flex-col justify-end"
             >
-              <div className="flex h-[54px] items-center justify-center overflow-hidden rounded-2xl bg-white/95 px-3 py-1 ring-1 ring-slate-200">
+              <div className="relative h-[64px] overflow-visible">
                 <img
                   src={BBJF_AUTHORIZED_SIGNATURE_IMAGE_PATH}
                   alt={`${BBJF_AUTHORIZED_SIGNATORY_NAME} authorized signature`}
-                  className="h-full w-full object-contain mix-blend-multiply"
+                  className="pointer-events-none absolute left-1/2 top-[-20px] h-[92px] w-[290px] -translate-x-1/2 object-contain object-center mix-blend-multiply"
                   draggable={false}
                 />
               </div>
 
-              <div className="mt-1.5 h-px w-full bg-slate-500" />
+              <div className="-mt-2 h-px w-full bg-slate-500" />
 
-              <p className="mt-1.5 text-[12px] font-black uppercase tracking-[0.08em] text-slate-600">
+              <p className="mt-2.5 text-[12px] font-black uppercase tracking-[0.08em] text-slate-600">
                 {t('card.back.authorizedSignature')}
               </p>
               <p className="mt-0.5 text-[14px] font-black leading-tight text-slate-950">
