@@ -290,13 +290,13 @@ function HomePage() {
               </div>
 
               <h1
-                className={`bbjf-home-title mt-5 max-w-[11ch] text-[clamp(3.1rem,10vw,5.8rem)] font-black leading-[0.92] text-slate-950 sm:mt-6 md:text-[5.4rem] lg:text-[5.9rem] ${
+                className={`bbjf-home-title mt-5 max-w-none text-[clamp(2.85rem,8.2vw,5.15rem)] font-black leading-[0.94] text-slate-950 sm:mt-6 md:text-[4.95rem] lg:text-[5.2rem] xl:text-[5.55rem] ${
                   isRtl ? 'tracking-normal' : 'tracking-[-0.055em]'
                 }`}
               >
-                <span className="block">{copy.titleLines[0]}</span>
-                <span className="block text-emerald-700">{copy.titleLines[1]}</span>
-                <span className="block">{copy.titleLines[2]}</span>
+                <span className="block whitespace-nowrap">{copy.titleLines[0]}</span>
+                <span className="block whitespace-nowrap text-emerald-700">{copy.titleLines[1]}</span>
+                <span className="block whitespace-nowrap">{copy.titleLines[2]}</span>
               </h1>
 
               <p className="bbjf-home-lede mt-5 max-w-2xl text-[0.98rem] font-semibold leading-7 text-slate-600 sm:text-lg sm:leading-8 md:text-xl">
