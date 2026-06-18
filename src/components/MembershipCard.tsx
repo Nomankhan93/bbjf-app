@@ -279,7 +279,7 @@ const CardBack = forwardRef<HTMLElement, {
               />
               <Info label={t('dashboard.bloodGroup')} value={member.blood_group} />
               <Info label={t('dashboard.profession')} value={member.profession} />
-              <Info label={t('card.wingCategory')} value={member.caste_branch} />
+              <Info label={t('card.caste')} value={member.caste_branch} />
             </div>
           </section>
 
