@@ -1,6 +1,6 @@
 // src/lib/membership-fee.ts
 // BBJF manual membership-fee helpers adapted from the JAS membership portal.
-// Update the manual payment account/QR details below before production use.
+// Fee remains BBJF-specific at Rs. 500; payment account/QR details match JAS.
 
 export const MEMBERSHIP_BASE_FEE = 500
 export const MEMBERSHIP_FEE_CURRENCY = 'PKR'
@@ -18,16 +18,15 @@ export const MEMBERSHIP_RECEIPT_ALLOWED_TYPES = [
   'application/pdf',
 ]
 
-// Replace this placeholder image with the real BBJF payment QR when available.
-export const MEMBERSHIP_PAYMENT_QR_IMAGE_PATH = '/bbjf-icon-512.png'
+export const MEMBERSHIP_PAYMENT_QR_IMAGE_PATH = '/bbjf/membership-payment-qr.jpg'
 
 export const MEMBERSHIP_MANUAL_PAYMENT_DETAILS = {
-  bankName: 'BBJF Membership Account',
-  accountTitle: 'Bilawal Bhutto Jayala Federation',
-  accountNumber: 'Add account number',
-  iban: 'Add IBAN',
-  paymentNetwork: 'JazzCash / Easypaisa / Bank Transfer',
-  tillId: 'Add Till ID',
+  bankName: 'Mobilink Microfinance Bank',
+  accountTitle: 'Abdur shop',
+  accountNumber: '01333300393',
+  iban: 'PK08JCMA1905921333300393',
+  paymentNetwork: 'JazzCash / Raast',
+  tillId: '983365478',
 } as const
 
 export type MembershipPaymentStatus =
@@ -160,7 +159,7 @@ export function createPendingMembershipPaymentPayload(
     currency: MEMBERSHIP_FEE_CURRENCY,
     status: 'pending' as const,
     payment_method: 'bank' as const,
-    gateway_provider: 'manual_bbjf_membership_account',
+    gateway_provider: 'manual_mobilink_microfinance_bank',
     gateway_reference: null,
     receipt_path: receipt?.receipt_path ?? null,
     receipt_file_name: receipt?.receipt_file_name ?? null,

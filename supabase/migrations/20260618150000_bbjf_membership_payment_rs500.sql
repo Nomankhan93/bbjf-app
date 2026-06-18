@@ -72,7 +72,7 @@ set
   total_amount = 500,
   currency = 'PKR',
   payment_method = 'bank',
-  gateway_provider = coalesce(gateway_provider, 'manual_bbjf_membership_account'),
+  gateway_provider = coalesce(gateway_provider, 'manual_mobilink_microfinance_bank'),
   updated_at = now()
 where status in ('pending', 'failed', 'cancelled')
   and (
@@ -90,7 +90,7 @@ set
   total_amount = 500,
   currency = 'PKR',
   payment_method = 'bank',
-  gateway_provider = coalesce(gateway_provider, 'manual_bbjf_membership_account'),
+  gateway_provider = coalesce(gateway_provider, 'manual_mobilink_microfinance_bank'),
   updated_at = now()
 where status in ('paid', 'waived')
   and base_amount = 0
@@ -275,7 +275,7 @@ using (
 );
 
 comment on table public.membership_payments is
-  'BBJF dedicated Rs. 500 membership application fee/payment records. Do not mix voluntary donations here.';
+  'BBJF dedicated Rs. 500 membership application fee/payment records using manual Mobilink Microfinance Bank / JazzCash Raast receipt verification. Do not mix voluntary donations here.';
 
 comment on column public.membership_payments.receipt_path is
   'Private storage path in membership-receipts bucket for manual BBJF membership fee receipt.';
