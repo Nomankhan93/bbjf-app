@@ -5,6 +5,9 @@ export const APP_NAME = 'Bilawal Bhutto Jayala Federation'
 export const APP_SHORT_NAME = 'BBJF'
 export const BBJF_ICON_PATH = '/bbjf-icon-512.png'
 export const BBJF_LEADER_IMAGE_PATH = '/card-assets/bilawal-bhutto-card-leader.png'
+export const BBJF_AUTHORIZED_SIGNATURE_IMAGE_PATH = '/bbjf/authorized-signature-taj-muhammad-bhurgai.png'
+export const BBJF_AUTHORIZED_SIGNATORY_NAME = 'Taj Muhammad Bhurgai'
+export const BBJF_AUTHORIZED_SIGNATORY_TITLE = 'Provincial President, Sindh'
 export const CARD_EXPORT_WIDTH = 1016
 export const CARD_EXPORT_HEIGHT = 638
 
@@ -337,19 +340,25 @@ const CardBack = forwardRef<HTMLElement, {
               tone="dark"
               contentClassName="flex flex-1 flex-col justify-end"
             >
-              <div className="flex h-[70px] items-center justify-center overflow-hidden rounded-2xl bg-white/85 px-3 text-center ring-1 ring-slate-200">
-                <p className="text-[18px] font-black uppercase tracking-[0.12em] text-slate-950">
-                  {t('card.back.issuedElectronically')}
-                </p>
+              <div className="flex h-[54px] items-center justify-center overflow-hidden rounded-2xl bg-white/95 px-3 py-1 ring-1 ring-slate-200">
+                <img
+                  src={BBJF_AUTHORIZED_SIGNATURE_IMAGE_PATH}
+                  alt={`${BBJF_AUTHORIZED_SIGNATORY_NAME} authorized signature`}
+                  className="h-full w-full object-contain mix-blend-multiply"
+                  draggable={false}
+                />
               </div>
 
-              <div className="mt-2 h-[2px] w-full bg-slate-500" />
+              <div className="mt-1.5 h-px w-full bg-slate-500" />
 
-              <p className="mt-2 text-[15px] font-black leading-none text-slate-950">
+              <p className="mt-1.5 text-[12px] font-black uppercase tracking-[0.08em] text-slate-600">
                 {t('card.back.authorizedSignature')}
               </p>
-              <p className="mt-1 text-[11px] font-black uppercase tracking-[0.08em] text-slate-600">
-                {t('card.back.digitalOffice')}
+              <p className="mt-0.5 text-[14px] font-black leading-tight text-slate-950">
+                {BBJF_AUTHORIZED_SIGNATORY_NAME}
+              </p>
+              <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-slate-600">
+                {BBJF_AUTHORIZED_SIGNATORY_TITLE}
               </p>
             </BackPanel>
           </main>
