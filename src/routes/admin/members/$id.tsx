@@ -1,10 +1,11 @@
+// src/routes/admin/members/$id.tsx
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { AdminShell } from '../../../components/admin/AdminShell'
 import {
   designationLevelOptions,
+  designationTitleOptions,
   getDefaultDesignationArea,
-  getRecommendedDesignations,
 } from '../../../lib/designation-assignment'
 import { approveMemberAction, rejectMemberAction } from '../../../lib/admin/actions'
 import { useI18n, type TranslationKey } from '../../../lib/i18n'
@@ -1079,7 +1080,9 @@ function DesignationAssignmentPanel({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onClear: () => void
 }) {
-  const suggestions = getRecommendedDesignations(form.designationLevel)
+  const hasCustomDesignation =
+    Boolean(form.designation) &&
+    !designationTitleOptions.some((item) => item === form.designation)
   const hasDesignation = Boolean(member.designation?.trim())
   const canAssign = member.status === 'approved'
 
@@ -1156,18 +1159,23 @@ function DesignationAssignmentPanel({
           </AdminFormField>
 
           <AdminFormField label="Designation / Office Title" required>
-            <input
+            <select
               value={form.designation}
               onChange={(event) => onChange({ designation: event.target.value })}
               className="input"
-              placeholder={suggestions[0] ?? 'e.g. City General Secretary'}
-              list="bbjf-designation-suggestions"
-            />
-            <datalist id="bbjf-designation-suggestions">
-              {suggestions.map((item) => (
-                <option key={item} value={item} />
+            >
+              <option value="">Select designation</option>
+              {hasCustomDesignation ? (
+                <option value={form.designation}>
+                  {form.designation} (current)
+                </option>
+              ) : null}
+              {designationTitleOptions.map((title) => (
+                <option key={title} value={title}>
+                  {title}
+                </option>
               ))}
-            </datalist>
+            </select>
           </AdminFormField>
 
           <AdminFormField label="Area / Jurisdiction" required>

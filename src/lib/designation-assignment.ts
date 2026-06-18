@@ -1,3 +1,4 @@
+// src/lib/designation-assignment.ts
 export const designationLevelOptions = [
   'UC',
   'City',
@@ -9,70 +10,53 @@ export const designationLevelOptions = [
 
 export type DesignationLevel = (typeof designationLevelOptions)[number]
 
-export const recommendedDesignationsByLevel: Record<DesignationLevel, string[]> = {
-  UC: [
-    'UC President',
-    'UC Senior Vice President',
-    'UC Vice President',
-    'UC General Secretary',
-    'UC Information Secretary',
-    'UC Finance Secretary',
-    'UC Coordinator',
-  ],
-  City: [
-    'City President',
-    'City Senior Vice President',
-    'City Vice President',
-    'City General Secretary',
-    'City Information Secretary',
-    'City Finance Secretary',
-    'City Coordinator',
-  ],
-  Taluka: [
-    'Taluka President',
-    'Taluka Senior Vice President',
-    'Taluka Vice President',
-    'Taluka General Secretary',
-    'Taluka Information Secretary',
-    'Taluka Finance Secretary',
-    'Taluka Coordinator',
-  ],
-  District: [
-    'District President',
-    'District Senior Vice President',
-    'District Vice President',
-    'District General Secretary',
-    'District Information Secretary',
-    'District Finance Secretary',
-    'District Coordinator',
-  ],
-  Divisional: [
-    'Divisional President',
-    'Divisional Senior Vice President',
-    'Divisional Vice President',
-    'Divisional General Secretary',
-    'Divisional Information Secretary',
-    'Divisional Finance Secretary',
-    'Divisional Coordinator',
-  ],
-  Provincial: [
-    'Provincial President',
-    'Provincial Senior Vice President',
-    'Provincial Vice President',
-    'Provincial General Secretary',
-    'Provincial Information Secretary',
-    'Provincial Finance Secretary',
-    'Provincial Coordinator',
-  ],
+export const designationTitleOptions = [
+  'President',
+  'Senior Vice President',
+  'Vice President',
+  'Vice President-I',
+  'Vice President-II',
+  'Vice President-III',
+  'General Secretary',
+  'Deputy General Secretary',
+  'Information Secretary',
+  'Deputy Information Secretary',
+  'Finance Secretary',
+  'Deputy Finance Secretary',
+  'Record Secretary',
+  'Social Media Person',
+  'Social Media Person-I',
+  'Social Media Person-II',
+  'Coordinator',
+  'Coordinator-I',
+  'Coordinator-II',
+] as const
+
+export type DesignationTitle = (typeof designationTitleOptions)[number]
+
+export const recommendedDesignationsByLevel: Record<
+  DesignationLevel,
+  readonly DesignationTitle[]
+> = {
+  UC: designationTitleOptions,
+  City: designationTitleOptions,
+  Taluka: designationTitleOptions,
+  District: designationTitleOptions,
+  Divisional: designationTitleOptions,
+  Provincial: designationTitleOptions,
 }
 
 export function isDesignationLevel(value: string): value is DesignationLevel {
   return designationLevelOptions.includes(value as DesignationLevel)
 }
 
-export function getRecommendedDesignations(level: string) {
+export function isDesignationTitle(value: string): value is DesignationTitle {
+  return designationTitleOptions.includes(value as DesignationTitle)
+}
+
+export function getRecommendedDesignations(level: string): string[] {
   if (!isDesignationLevel(level)) return []
-  return recommendedDesignationsByLevel[level]
+  return [...recommendedDesignationsByLevel[level]]
 }
 
 export function getDefaultDesignationArea(level: string, member: {
