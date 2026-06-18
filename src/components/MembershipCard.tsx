@@ -79,8 +79,6 @@ export const MembershipCard = forwardRef<HTMLDivElement, MembershipCardProps>(
           ref={backRef}
           member={member}
           brandIconUrl={brandIconUrl}
-          qrUrl={qrUrl}
-          verifyUrl={verifyUrl}
         />
       </div>
     )
@@ -228,15 +226,11 @@ const CardFront = forwardRef<HTMLElement, {
 const CardBack = forwardRef<HTMLElement, {
   member: MembershipCardMember
   brandIconUrl: string | null
-  qrUrl: string | null
-  verifyUrl: string
 }>(function CardBack(
-  { member, brandIconUrl, qrUrl, verifyUrl },
+  { member, brandIconUrl },
   ref,
 ) {
   const { t, direction, language } = useI18n()
-  const verificationUrl =
-    formatVerifyUrlForDisplay(verifyUrl) || t('card.back.verifyUrlUnavailable')
 
   return (
     <section
@@ -277,13 +271,13 @@ const CardBack = forwardRef<HTMLElement, {
       <div className="relative min-h-0 flex-1 overflow-hidden bg-white">
         <CardWatermark brandIconUrl={brandIconUrl} />
 
-        <div className="relative grid h-full min-h-0 grid-cols-[minmax(0,1fr)_220px] gap-4 p-4">
-          <main className="grid h-full min-h-0 grid-cols-2 grid-rows-[1fr_1.05fr_1.25fr] gap-3">
+        <div className="relative flex h-full min-h-0 p-4">
+          <main className="grid h-full min-h-0 w-full grid-cols-[1.08fr_1fr] grid-rows-[0.94fr_1.06fr_1.16fr] gap-3">
             <BackPanel title={t('card.back.residentialAddress')} tone="gold">
-              <p className="line-clamp-3 break-words text-[14px] font-black leading-snug text-slate-950">
+              <p className="line-clamp-3 break-words text-[15px] font-black leading-snug text-slate-950">
                 {member.address || t('common.notProvided')}
               </p>
-              <p className="mt-2 break-words text-[12px] font-bold text-slate-800">
+              <p className="mt-2 break-words text-[13px] font-bold text-slate-800">
                 {[member.taluka, member.district].filter(Boolean).join(', ') ||
                   t('common.notProvided')}
               </p>
@@ -292,13 +286,13 @@ const CardBack = forwardRef<HTMLElement, {
             <BackPanel title={t('card.back.emergencyContact')}>
               {member.emergency_contact_name || member.emergency_contact_mobile ? (
                 <>
-                  <p className="line-clamp-1 break-words text-[14px] font-black text-slate-950">
+                  <p className="line-clamp-1 break-words text-[15px] font-black text-slate-950">
                     {member.emergency_contact_name || t('common.notProvided')}
                   </p>
-                  <p className="mt-1 text-[12px] font-bold text-slate-700">
+                  <p className="mt-1 text-[13px] font-bold text-slate-700">
                     {member.emergency_contact_relation || t('common.notProvided')}
                   </p>
-                  <p className="mt-1 text-[14px] font-black text-slate-950">
+                  <p className="mt-2 text-[15px] font-black text-slate-950">
                     {formatMobile(member.emergency_contact_mobile) || t('common.notProvided')}
                   </p>
                 </>
@@ -309,8 +303,11 @@ const CardBack = forwardRef<HTMLElement, {
               )}
             </BackPanel>
 
-            <BackPanel title={t('card.back.memberInfo')} contentClassName="flex items-center">
-              <div className="grid w-full grid-cols-3 gap-x-3 gap-y-2">
+            <BackPanel
+              title={t('card.back.memberInfo')}
+              contentClassName="flex items-center"
+            >
+              <div className="grid w-full grid-cols-3 gap-x-5 gap-y-3">
                 <MiniInfo label={t('card.back.dob')} value={formatDate(member.date_of_birth, language)} />
                 <MiniInfo label={t('dashboard.gender')} value={member.gender} />
                 <MiniInfo label={t('card.back.blood')} value={member.blood_group} />
@@ -322,13 +319,16 @@ const CardBack = forwardRef<HTMLElement, {
               </div>
             </BackPanel>
 
-            <BackPanel title={t('card.back.verificationInstructions')}>
+            <BackPanel
+              title={t('card.back.verificationInstructions')}
+              contentClassName="flex flex-col justify-center"
+            >
               <p>{t('card.back.scanInstruction')}</p>
-              <p className="mt-1">{t('card.back.matchInstruction')}</p>
+              <p className="mt-1.5">{t('card.back.matchInstruction')}</p>
             </BackPanel>
 
             <BackPanel title={t('card.back.terms')}>
-              <ul className="list-disc space-y-1 pl-4">
+              <ul className="list-disc space-y-1.5 pl-4">
                 <li>{t('card.back.term1').replace(/^\d+\.\s*/, '')}</li>
                 <li>{t('card.back.term2').replace(/^\d+\.\s*/, '')}</li>
                 <li>{t('card.back.term3').replace(/^\d+\.\s*/, '')}</li>
@@ -340,16 +340,16 @@ const CardBack = forwardRef<HTMLElement, {
               tone="dark"
               contentClassName="flex flex-1 flex-col justify-end"
             >
-              <div className="relative h-[64px] overflow-visible">
+              <div className="relative h-[70px] overflow-visible">
                 <img
                   src={BBJF_AUTHORIZED_SIGNATURE_IMAGE_PATH}
                   alt={`${BBJF_AUTHORIZED_SIGNATORY_NAME} authorized signature`}
-                  className="pointer-events-none absolute left-1/2 top-[-20px] h-[92px] w-[290px] -translate-x-1/2 object-contain object-center mix-blend-multiply"
+                  className="pointer-events-none absolute left-[60%] top-[-18px] h-[98px] w-[300px] -translate-x-1/2 object-contain object-center mix-blend-multiply"
                   draggable={false}
                 />
               </div>
 
-              <div className="-mt-2 h-px w-full bg-slate-500" />
+              <div className="-mt-1.5 h-px w-full bg-slate-500" />
 
               <p className="mt-2.5 text-[12px] font-black uppercase tracking-[0.08em] text-slate-600">
                 {t('card.back.authorizedSignature')}
@@ -362,59 +362,7 @@ const CardBack = forwardRef<HTMLElement, {
               </p>
             </BackPanel>
           </main>
-
-          <aside className="flex h-full min-h-0 flex-col justify-between gap-3 rounded-[1.45rem] border border-slate-200 bg-white/95 p-3 shadow-lg">
-            <div className="rounded-2xl border border-yellow-400 bg-slate-950 px-3 py-3 text-center shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-yellow-300">
-                {t('card.back.issueNoVersion')}
-              </p>
-              <p className="mt-1 break-all text-[13px] font-black text-white">
-                {member.member_no ? `${member.member_no} / v1` : `Pending / v1`}
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white p-2 text-center shadow-sm ring-1 ring-slate-200">
-              {qrUrl ? (
-                <img
-                  src={qrUrl}
-                  alt={t('card.front.qrAlt')}
-                  className="mx-auto h-[148px] w-[148px] rounded-xl bg-white p-1"
-                  draggable={false}
-                />
-              ) : (
-                <div className="mx-auto flex h-[148px] w-[148px] items-center justify-center rounded-xl bg-slate-100 text-[11px] font-bold text-slate-500 ring-1 ring-slate-200">
-                  {t('card.back.verifyUrlUnavailable')}
-                </div>
-              )}
-
-              <p className="mt-2 text-center text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
-                {t('card.scanToVerifyTitle')}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
-                {t('card.back.verificationUrl')}
-              </p>
-              <p className="mt-1 line-clamp-3 break-all text-[10px] font-bold leading-4 text-slate-950">
-                {verificationUrl}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-yellow-300 bg-yellow-50 p-3">
-              <p className="text-[10px] font-black uppercase tracking-wide text-yellow-800">
-                {t('card.back.organization')}
-              </p>
-              <p className="mt-1 text-[12px] font-black leading-4 text-slate-950">
-                {APP_NAME}
-              </p>
-              <p className="text-[10px] font-semibold text-slate-600">
-                {t('card.back.organizationLocation')}
-              </p>
-            </div>
-          </aside>
-        </div>
-      </div>
+        </div>      </div>
 
       <footer className="shrink-0 border-t border-slate-200 bg-slate-50 px-6 py-2">
         <p className="text-[10.5px] font-semibold leading-4 text-slate-500">
