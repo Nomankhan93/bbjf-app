@@ -466,7 +466,7 @@ function AdminPage() {
                 {t('admin.title')}
               </h1>
               <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-white/70 md:text-base">
-                Review applications, approve members, reject incomplete forms and manage QR-enabled digital cards. No payment, donation or program modules are included in this BBJF portal.
+                Review applications, verify Rs. 500 membership receipts, approve members, reject incomplete forms and manage QR-enabled digital cards. Donation and program modules are not included in this BBJF portal.
               </p>
             </div>
 

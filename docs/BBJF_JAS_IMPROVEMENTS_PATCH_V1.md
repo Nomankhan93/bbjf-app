@@ -1,5 +1,7 @@
 # BBJF JAS Improvements Patch v1
 
+> Note: Payment was re-enabled later by `BBJF_PAYMENT_RS500_PATCH.md` with a Rs. 500 membership-fee workflow. Older payment-cleanup notes in this file are historical.
+
 This patch ports the safest must-have improvements from `jas-app` into the BBJF membership portal without copying JAS-only modules.
 
 ## Included

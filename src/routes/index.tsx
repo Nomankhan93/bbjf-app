@@ -130,7 +130,7 @@ function HomePage() {
               Membership portal only
             </p>
             <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">
-              Clean BBJF scope without payment, donation or program complexity.
+              Clean BBJF scope with Rs. 500 membership fee receipt verification, digital cards and admin workflows.
             </h2>
             <p className="mt-3 text-sm font-semibold leading-7 text-white/70">
               This app is intentionally focused on membership lifecycle: account,

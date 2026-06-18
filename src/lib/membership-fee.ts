@@ -1,8 +1,8 @@
 // src/lib/membership-fee.ts
-// BBJF membership-fee helpers adapted from the JAS membership portal.
-// Update the manual payment details below before production use.
+// BBJF manual membership-fee helpers adapted from the JAS membership portal.
+// Update the manual payment account/QR details below before production use.
 
-export const MEMBERSHIP_BASE_FEE = 700
+export const MEMBERSHIP_BASE_FEE = 500
 export const MEMBERSHIP_FEE_CURRENCY = 'PKR'
 export const MEMBERSHIP_PROCESSING_LABEL = 'applicable tax/processing charges'
 export const MEMBERSHIP_PAYMENT_COMING_SOON_TEXT =
@@ -83,6 +83,67 @@ export function formatMembershipMoney(value: number | string | null | undefined)
     maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
     minimumFractionDigits: 0,
   })}`
+}
+
+export function getMembershipFeeNotice() {
+  return `Membership Application Fee: ${formatMembershipMoney(
+    MEMBERSHIP_BASE_FEE,
+  )} + ${MEMBERSHIP_PROCESSING_LABEL}.`
+}
+
+export function getMembershipFeeSubtext() {
+  return 'Final payable amount will be shown before payment.'
+}
+
+export function getManualMembershipPaymentInstruction() {
+  return `Send the membership application fee to ${MEMBERSHIP_MANUAL_PAYMENT_DETAILS.bankName} account ${MEMBERSHIP_MANUAL_PAYMENT_DETAILS.accountNumber} or scan the provided QR code, then upload the payment receipt before submitting your application.`
+}
+
+export function getMembershipPaymentQrHelpText() {
+  return `You can pay through ${MEMBERSHIP_MANUAL_PAYMENT_DETAILS.paymentNetwork} by scanning the QR code or using Till ID ${MEMBERSHIP_MANUAL_PAYMENT_DETAILS.tillId}.`
+}
+
+export function getMembershipPaymentStatusLabel(
+  status: MembershipPaymentStatus | null | undefined,
+) {
+  switch (status) {
+    case 'paid':
+      return 'Paid'
+    case 'failed':
+      return 'Failed'
+    case 'cancelled':
+      return 'Cancelled'
+    case 'refunded':
+      return 'Refunded'
+    case 'waived':
+      return 'Waived'
+    default:
+      return 'Pending'
+  }
+}
+
+export function getMembershipPaymentStatusClass(
+  status: MembershipPaymentStatus | null | undefined,
+) {
+  switch (status) {
+    case 'paid':
+      return 'border-emerald-200 bg-emerald-50 text-emerald-800'
+    case 'waived':
+      return 'border-sky-200 bg-sky-50 text-sky-800'
+    case 'failed':
+    case 'cancelled':
+      return 'border-red-200 bg-red-50 text-red-800'
+    case 'refunded':
+      return 'border-purple-200 bg-purple-50 text-purple-800'
+    default:
+      return 'border-amber-200 bg-amber-50 text-amber-800'
+  }
+}
+
+export function getMembershipPaymentDisplayStatus(
+  payment: Pick<MembershipPayment, 'status'> | null | undefined,
+) {
+  return payment?.status ?? 'pending'
 }
 
 export function createPendingMembershipPaymentPayload(

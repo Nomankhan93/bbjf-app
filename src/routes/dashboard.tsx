@@ -4,6 +4,7 @@ import {
   CalendarDays,
   ClipboardList,
   Copy,
+  CreditCard,
   Eye,
   EyeOff,
   IdCard,
@@ -14,6 +15,18 @@ import {
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useI18n } from '../lib/i18n'
 import { supabase } from '../lib/supabase/client'
+import {
+  MEMBERSHIP_BASE_FEE,
+  MEMBERSHIP_MANUAL_PAYMENT_DETAILS,
+  MEMBERSHIP_PAYMENT_COMING_SOON_TEXT,
+  MEMBERSHIP_PAYMENT_QR_IMAGE_PATH,
+  type MembershipPayment,
+  formatMembershipMoney,
+  getMembershipPaymentDisplayStatus,
+  getMembershipPaymentQrHelpText,
+  getMembershipPaymentStatusClass,
+  getMembershipPaymentStatusLabel,
+} from '../lib/membership-fee'
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardPage,
@@ -60,6 +73,7 @@ function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [member, setMember] = useState<Member | null>(null)
   const [photoSignedUrl, setPhotoSignedUrl] = useState<string | null>(null)
+  const [membershipPayment, setMembershipPayment] = useState<MembershipPayment | null>(null)
   const [error, setError] = useState('')
   const [showSensitive, setShowSensitive] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -103,6 +117,7 @@ function DashboardPage() {
 
     const nextMember = data as Member | null
     setMember(nextMember)
+    setMembershipPayment(await loadMembershipPayment(nextMember?.id))
 
     if (nextMember?.photo_url) {
       const { data: signed } = await supabase.storage
@@ -207,7 +222,7 @@ function DashboardPage() {
               onCopyVerifyLink={copyVerifyLink}
             />
 
-            <section className="grid gap-4 md:grid-cols-4">
+            <section className="grid gap-4 md:grid-cols-5">
               <DashboardMetric
                 icon={<ShieldCheck className="h-5 w-5" />}
                 label={t('dashboard.currentStatus')}
@@ -231,6 +246,14 @@ function DashboardPage() {
                 label={t('dashboard.approvedOn')}
                 value={formatDate(member.approved_at, language) ?? t('common.na')}
                 tone="approved"
+              />
+              <DashboardMetric
+                icon={<CreditCard className="h-5 w-5" />}
+                label={t('dashboard.feeStatus')}
+                value={getMembershipPaymentStatusLabel(
+                  getMembershipPaymentDisplayStatus(membershipPayment),
+                )}
+                tone="neutral"
               />
             </section>
 
@@ -362,6 +385,8 @@ function DashboardPage() {
                   </div>
                 </section>
 
+                <MembershipFeePanel payment={membershipPayment} />
+
                 <section className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
                   <h2 className="text-lg font-black text-slate-950">
                     {t('dashboard.currentStatus')}
@@ -379,6 +404,85 @@ function DashboardPage() {
     </main>
   )
 }
+
+
+function MembershipFeePanel({ payment }: { payment: MembershipPayment | null }) {
+  const { t } = useI18n()
+  const status = getMembershipPaymentDisplayStatus(payment)
+
+  return (
+    <section className="rounded-[2rem] border border-amber-200 bg-amber-50 p-5 shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">
+            {t('signup.fee.label')}
+          </p>
+          <h2 className="mt-2 text-xl font-black text-slate-950">
+            {formatMembershipMoney(payment?.total_amount ?? MEMBERSHIP_BASE_FEE)}
+          </h2>
+        </div>
+        <span
+          className={`rounded-full border px-3 py-1 text-xs font-black ${getMembershipPaymentStatusClass(status)}`}
+        >
+          {getMembershipPaymentStatusLabel(status)}
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-3 text-sm">
+        <PaymentInfoBox
+          label={t('dashboard.baseFee')}
+          value={formatMembershipMoney(payment?.base_amount ?? MEMBERSHIP_BASE_FEE)}
+        />
+        <PaymentInfoBox
+          label={t('dashboard.taxCharges')}
+          value={payment ? formatMembershipMoney(payment.tax_amount) : t('dashboard.applicableAtPayment')}
+        />
+        <PaymentInfoBox
+          label={t('dashboard.paymentAccount')}
+          value={`${MEMBERSHIP_MANUAL_PAYMENT_DETAILS.bankName} · ${MEMBERSHIP_MANUAL_PAYMENT_DETAILS.accountNumber}`}
+        />
+        <PaymentInfoBox
+          label={t('dashboard.receipt')}
+          value={
+            payment?.receipt_path
+              ? payment.receipt_file_name || 'Uploaded for admin verification'
+              : MEMBERSHIP_PAYMENT_COMING_SOON_TEXT
+          }
+        />
+      </div>
+
+      <div className="mt-4 overflow-hidden rounded-2xl border border-amber-200 bg-white p-3 text-center shadow-sm">
+        <img
+          src={MEMBERSHIP_PAYMENT_QR_IMAGE_PATH}
+          alt="Membership fee payment QR code"
+          className="mx-auto w-full max-w-[180px] rounded-xl object-contain"
+          loading="lazy"
+        />
+        <p className="mt-3 text-xs font-bold leading-5 text-slate-800">
+          {getMembershipPaymentQrHelpText()}
+        </p>
+      </div>
+
+      <p className="mt-4 text-xs font-bold leading-5 text-amber-800">
+        {t('dashboard.receiptRequired')}
+      </p>
+    </section>
+  )
+}
+
+function PaymentInfoBox({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <div className="rounded-2xl bg-white/80 p-3 ring-1 ring-amber-100">
+      <p className="text-[11px] font-black uppercase tracking-wide text-amber-700">
+        {label}
+      </p>
+      <p className="mt-1 break-words text-sm font-black text-slate-950">
+        {value || '-'}
+      </p>
+    </div>
+  )
+}
+
 
 function NoMemberState() {
   const { t } = useI18n()
@@ -666,6 +770,24 @@ function maskMobile(value: string | null | undefined) {
   const digits = value.replace(/\D/g, '')
   if (digits.length < 8) return '03*********'
   return `${digits.slice(0, 4)}*****${digits.slice(-2)}`
+}
+
+
+async function loadMembershipPayment(memberId?: string | null) {
+  if (!memberId) return null
+
+  const { data, error } = await (supabase as any)
+    .from('membership_payments')
+    .select('*')
+    .eq('member_id', memberId)
+    .maybeSingle()
+
+  if (error) {
+    console.warn('Membership payment status could not be loaded:', error.message)
+    return null
+  }
+
+  return data
 }
 
 function formatDate(value: string | null | undefined, language: string) {

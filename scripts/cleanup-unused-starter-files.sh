@@ -12,6 +12,6 @@ rm -f \
   src/data/demo-table-data.ts \
   src/hooks/demo.form-context.ts \
   src/hooks/demo.form.ts \
-  src/lib/membership-fee.ts
+ 
 
-echo "Removed unused TanStack starter/demo and deprecated payment helper files."
+echo "Removed unused TanStack starter/demo files."

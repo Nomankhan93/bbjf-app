@@ -16,6 +16,20 @@ import {
   normalizeMobile,
   optionalText,
 } from '../../../lib/shared/formatters'
+import {
+  MEMBERSHIP_RECEIPT_ALLOWED_TYPES,
+  MEMBERSHIP_RECEIPT_BUCKET,
+  MEMBERSHIP_RECEIPT_MAX_SIZE_BYTES,
+  MEMBERSHIP_RECEIPT_MAX_SIZE_LABEL,
+  type MembershipPayment,
+  type MembershipPaymentStatus,
+  createPendingMembershipPaymentPayload,
+  formatMembershipMoney,
+  getMembershipPaymentDisplayStatus,
+  getMembershipPaymentQrHelpText,
+  getMembershipPaymentStatusClass,
+  getMembershipPaymentStatusLabel,
+} from '../../../lib/membership-fee'
 import { supabase } from '../../../lib/supabase/client'
 
 export const Route = createFileRoute('/admin/members/$id')({
@@ -95,6 +109,7 @@ const MEMBER_PHOTO_MAX_SIZE_BYTES = 2 * 1024 * 1024
 const MEMBER_PHOTO_MAX_SIZE_LABEL = '2MB'
 const MEMBER_PHOTO_ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 const SIGNED_URL_TTL_SECONDS = 60 * 60
+const RECEIPT_SIGNED_URL_TTL_SECONDS = 60 * 60
 
 function AdminMemberDetailPage() {
   const { id } = Route.useParams()
@@ -120,8 +135,16 @@ function AdminMemberDetailPage() {
   const [editErrors, setEditErrors] = useState<AdminEditErrors>({})
   const [editPhoto, setEditPhoto] = useState<File | null>(null)
   const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null)
+  const [membershipPayment, setMembershipPayment] = useState<MembershipPayment | null>(null)
+  const [receiptSignedUrl, setReceiptSignedUrl] = useState<string | null>(null)
+  const [paymentAdminNote, setPaymentAdminNote] = useState('')
+  const [paymentLoadError, setPaymentLoadError] = useState('')
+  const [paymentActionLoading, setPaymentActionLoading] = useState(false)
+  const [receiptUploading, setReceiptUploading] = useState(false)
 
   const canOpenCard = member?.status === 'approved' && Boolean(member.member_no)
+  const canEditPaymentReceipt =
+    member?.status === 'pending' || member?.status === 'rejected'
 
   useEffect(() => {
     if (isCardChildRoute) return
@@ -146,6 +169,7 @@ function AdminMemberDetailPage() {
     setError('')
     setSuccess('')
     setDesignationMessage('')
+    setPaymentLoadError('')
 
     const {
       data: { user },
@@ -176,6 +200,10 @@ function AdminMemberDetailPage() {
 
     if (error) {
       setError(error.message)
+      setMembershipPayment(null)
+      setReceiptSignedUrl(null)
+      setPaymentAdminNote('')
+      setPaymentLoadError('')
       setLoading(false)
       return
     }
@@ -204,6 +232,12 @@ function AdminMemberDetailPage() {
     } else {
       setPhotoUrl(null)
     }
+
+    const paymentResult = await fetchMembershipPaymentWithReceiptUrl(nextMember.id)
+    setMembershipPayment(paymentResult.payment)
+    setReceiptSignedUrl(paymentResult.receiptSignedUrl)
+    setPaymentAdminNote(paymentResult.payment?.admin_note ?? '')
+    setPaymentLoadError(paymentResult.errorMessage ?? '')
 
     setLoading(false)
   }
@@ -534,6 +568,181 @@ function AdminMemberDetailPage() {
     setDesignationSaving(false)
   }
 
+
+  async function handlePaymentReceiptUpload(file: File) {
+    if (!member || receiptUploading) return
+
+    const paymentFinal =
+      membershipPayment?.status === 'paid' || membershipPayment?.status === 'waived'
+
+    if (paymentFinal) {
+      setError('Paid or waived payment records are locked. Receipt changes are not allowed.')
+      return
+    }
+
+    if (!canEditPaymentReceipt) {
+      setError('Receipt replacement is available only before approval. Use payment status controls for approved members.')
+      return
+    }
+
+    if (!MEMBERSHIP_RECEIPT_ALLOWED_TYPES.includes(file.type)) {
+      setError(`Receipt must be PNG, JPG, WebP or PDF and ${MEMBERSHIP_RECEIPT_MAX_SIZE_LABEL} or smaller.`)
+      return
+    }
+
+    if (file.size > MEMBERSHIP_RECEIPT_MAX_SIZE_BYTES) {
+      setError(`Receipt file must be ${MEMBERSHIP_RECEIPT_MAX_SIZE_LABEL} or smaller.`)
+      return
+    }
+
+    if (
+      membershipPayment &&
+      membershipPayment.status !== 'pending' &&
+      membershipPayment.status !== 'failed'
+    ) {
+      setError('Only pending or failed payment records can receive replacement receipts.')
+      return
+    }
+
+    setReceiptUploading(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const receiptPath = `${member.user_id}/admin-receipt-${Date.now()}.${extension}`
+      const receiptMimeType = file.type || 'application/octet-stream'
+      const receiptUploadedAt = new Date().toISOString()
+
+      const { error: uploadError } = await supabase.storage
+        .from(MEMBERSHIP_RECEIPT_BUCKET)
+        .upload(receiptPath, file, {
+          upsert: true,
+          contentType: receiptMimeType,
+        })
+
+      if (uploadError) throw uploadError
+
+      const receiptPayload = {
+        receipt_path: receiptPath,
+        receipt_file_name: file.name,
+        receipt_mime_type: receiptMimeType,
+        receipt_size_bytes: file.size,
+        receipt_uploaded_at: receiptUploadedAt,
+      }
+
+      let savedPayment: MembershipPayment | null = null
+
+      if (membershipPayment) {
+        const { data, error: updateError } = await (supabase as any)
+          .from('membership_payments')
+          .update({
+            ...receiptPayload,
+            status:
+              membershipPayment.status === 'failed'
+                ? 'pending'
+                : membershipPayment.status,
+            updated_at: receiptUploadedAt,
+          })
+          .eq('id', membershipPayment.id)
+          .in('status', ['pending', 'failed'])
+          .select('*')
+          .maybeSingle()
+
+        if (updateError) throw updateError
+        if (!data) throw new Error('Payment record could not be updated.')
+        savedPayment = data
+      } else {
+        const { data, error: insertError } = await (supabase as any)
+          .from('membership_payments')
+          .insert(
+            createPendingMembershipPaymentPayload(
+              member.id,
+              member.user_id,
+              receiptPayload,
+            ),
+          )
+          .select('*')
+          .maybeSingle()
+
+        if (insertError) throw insertError
+        if (!data) throw new Error('Payment record could not be created.')
+        savedPayment = data
+      }
+
+      if (!savedPayment) throw new Error('Payment record could not be saved.')
+
+      const signedReceiptUrl = await createSignedReceiptUrl(savedPayment.receipt_path)
+      setMembershipPayment(savedPayment)
+      setReceiptSignedUrl(signedReceiptUrl)
+      setPaymentAdminNote(savedPayment.admin_note ?? '')
+      setPaymentLoadError(
+        savedPayment.receipt_path && !signedReceiptUrl
+          ? 'Receipt file not available.'
+          : '',
+      )
+      setSuccess('Payment receipt updated successfully.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload receipt.')
+    } finally {
+      setReceiptUploading(false)
+    }
+  }
+
+  async function handlePaymentStatusUpdate(status: MembershipPaymentStatus) {
+    if (!member || !membershipPayment || paymentActionLoading) return
+
+    const confirmed = window.confirm(
+      `Update membership fee status to ${getMembershipPaymentStatusLabel(status)}?`,
+    )
+
+    if (!confirmed) return
+
+    setPaymentActionLoading(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      const now = new Date().toISOString()
+      const nextPaidAt =
+        status === 'paid' || status === 'waived'
+          ? membershipPayment.paid_at ?? now
+          : null
+
+      const { data, error: updateError } = await (supabase as any)
+        .from('membership_payments')
+        .update({
+          status,
+          admin_note: paymentAdminNote.trim() || null,
+          paid_at: nextPaidAt,
+          updated_at: now,
+        })
+        .eq('id', membershipPayment.id)
+        .select('*')
+        .maybeSingle()
+
+      if (updateError) throw updateError
+      if (!data) throw new Error('Payment record could not be updated.')
+
+      const signedReceiptUrl = await createSignedReceiptUrl(data.receipt_path)
+      setMembershipPayment(data)
+      setReceiptSignedUrl(signedReceiptUrl)
+      setPaymentAdminNote(data.admin_note ?? '')
+      setPaymentLoadError(
+        data.receipt_path && !signedReceiptUrl ? 'Receipt file not available.' : '',
+      )
+      setSuccess(`Membership fee marked as ${getMembershipPaymentStatusLabel(status)}.`)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to update membership fee status.',
+      )
+    } finally {
+      setPaymentActionLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <AdminShell title={t('admin.detail.memberDetails')} subtitle={t('admin.description')}>
@@ -716,6 +925,20 @@ function AdminMemberDetailPage() {
           )}
         </section>
 
+        <MembershipPaymentPanel
+          payment={membershipPayment}
+          receiptSignedUrl={receiptSignedUrl}
+          loadError={paymentLoadError}
+          adminNote={paymentAdminNote}
+          onAdminNoteChange={setPaymentAdminNote}
+          onStatusUpdate={(status) => void handlePaymentStatusUpdate(status)}
+          onReceiptUpload={(file) => void handlePaymentReceiptUpload(file)}
+          actionLoading={paymentActionLoading}
+          receiptUploading={receiptUploading}
+          canEditReceipt={canEditPaymentReceipt}
+          language={language}
+        />
+
         <DesignationAssignmentPanel
           member={member}
           form={designationForm}
@@ -775,6 +998,219 @@ function AdminMemberDetailPage() {
     </AdminShell>
   )
 }
+
+
+function MembershipPaymentPanel({
+  payment,
+  receiptSignedUrl,
+  loadError,
+  adminNote,
+  onAdminNoteChange,
+  onStatusUpdate,
+  onReceiptUpload,
+  actionLoading,
+  receiptUploading,
+  canEditReceipt,
+  language,
+}: {
+  payment: MembershipPayment | null
+  receiptSignedUrl: string | null
+  loadError: string
+  adminNote: string
+  onAdminNoteChange: (value: string) => void
+  onStatusUpdate: (status: MembershipPaymentStatus) => void
+  onReceiptUpload: (file: File) => void
+  actionLoading: boolean
+  receiptUploading: boolean
+  canEditReceipt: boolean
+  language: string
+}) {
+  const status = getMembershipPaymentDisplayStatus(payment)
+  const paymentFinal = status === 'paid' || status === 'waived'
+  const canUpdate = Boolean(payment) && !actionLoading
+  const canUploadReceipt =
+    canEditReceipt &&
+    !receiptUploading &&
+    (!payment || payment.status === 'pending' || payment.status === 'failed') &&
+    !paymentFinal
+  const receiptLabel = payment?.receipt_file_name || (payment?.receipt_path ? 'Uploaded' : 'Not uploaded')
+
+  return (
+    <section className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-200/70 sm:p-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-700">
+            Membership Fee
+          </p>
+          <h2 className="mt-2 text-xl font-black text-slate-950">
+            Payment Receipt & Verification
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
+            Confirm the Rs. 500 manual payment receipt before final approval.
+          </p>
+        </div>
+
+        <span
+          className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-black ${getMembershipPaymentStatusClass(status)}`}
+        >
+          {getMembershipPaymentStatusLabel(status)}
+        </span>
+      </div>
+
+      {loadError ? (
+        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">
+          {loadError}
+        </div>
+      ) : null}
+
+      {!payment ? (
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
+          <p>No membership payment record found for this application.</p>
+          <label
+            className={`mt-4 inline-flex h-11 items-center justify-center rounded-xl border px-4 text-sm font-bold shadow-sm transition ${
+              canUploadReceipt
+                ? 'cursor-pointer border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100'
+                : 'cursor-not-allowed border-slate-200 bg-white text-slate-400'
+            }`}
+          >
+            {receiptUploading ? 'Uploading...' : 'Upload Receipt & Create Pending Payment'}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,application/pdf"
+              disabled={!canUploadReceipt}
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                event.target.value = ''
+                if (file) onReceiptUpload(file)
+              }}
+              className="sr-only"
+            />
+          </label>
+        </div>
+      ) : (
+        <>
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <InfoItem label="Base Fee" value={formatMembershipMoney(payment.base_amount)} />
+            <InfoItem label="Tax / Charges" value={formatMembershipMoney(payment.tax_amount)} />
+            <InfoItem label="Total Amount" value={`${formatMembershipMoney(payment.total_amount)} ${payment.currency}`} />
+            <InfoItem label="Payment Method" value={formatPaymentMethod(payment)} />
+            <InfoItem label="Gateway / Account" value={formatGatewayProvider(payment)} />
+            <InfoItem label="Gateway Reference" value={payment.gateway_reference} />
+            <InfoItem label="Receipt File" value={receiptLabel} />
+            <InfoItem label="Receipt Uploaded" value={formatDateTime(payment.receipt_uploaded_at, language)} />
+            <InfoItem label="Paid At" value={formatDateTime(payment.paid_at, language)} />
+            <InfoItem label="Last Updated" value={formatDateTime(payment.updated_at, language)} />
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.45fr)]">
+            <label className="block rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <span className="block text-xs font-black uppercase tracking-wide text-slate-500">
+                Admin Note
+              </span>
+              <textarea
+                value={adminNote}
+                onChange={(event) => onAdminNoteChange(event.target.value)}
+                className="mt-2 min-h-24 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                placeholder="Optional note about payment verification."
+              />
+            </label>
+
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+              <p>{getMembershipPaymentQrHelpText()}</p>
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-black text-slate-950">Payment Receipt</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                {payment.receipt_path
+                  ? receiptSignedUrl
+                    ? 'Private receipt link is ready for admin review.'
+                    : 'Receipt file not available.'
+                  : 'No receipt was uploaded with this payment record.'}
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+              <label
+                className={`inline-flex h-11 items-center justify-center rounded-xl border px-4 text-sm font-bold shadow-sm transition ${
+                  canUploadReceipt
+                    ? 'cursor-pointer border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100'
+                    : 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+                }`}
+              >
+                {receiptUploading ? 'Uploading...' : payment?.receipt_path ? 'Replace Receipt' : 'Upload Receipt'}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,application/pdf"
+                  disabled={!canUploadReceipt}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    event.target.value = ''
+                    if (file) onReceiptUpload(file)
+                  }}
+                  className="sr-only"
+                />
+              </label>
+
+              {!canUploadReceipt && paymentFinal ? (
+                <span className="inline-flex min-h-11 items-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-bold text-emerald-800">
+                  Final payment locked
+                </span>
+              ) : null}
+
+              {receiptSignedUrl ? (
+                <a
+                  href={receiptSignedUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-4 text-sm font-bold !text-white no-underline shadow-sm transition hover:bg-slate-800 hover:!text-white"
+                >
+                  Open Receipt
+                </a>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() => onStatusUpdate('pending')}
+                disabled={!canUpdate || status === 'pending'}
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-bold text-amber-900 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Mark Pending
+              </button>
+              <button
+                type="button"
+                onClick={() => onStatusUpdate('paid')}
+                disabled={!canUpdate || status === 'paid'}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {actionLoading ? 'Updating...' : 'Mark Paid'}
+              </button>
+              <button
+                type="button"
+                onClick={() => onStatusUpdate('waived')}
+                disabled={!canUpdate || status === 'waived'}
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-bold text-sky-900 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Mark Waived
+              </button>
+              <button
+                type="button"
+                onClick={() => onStatusUpdate('failed')}
+                disabled={!canUpdate || status === 'failed'}
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-bold text-red-900 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Mark Failed
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </section>
+  )
+}
+
 
 function AdminProfileEditPanel({
   form,
@@ -1327,6 +1763,83 @@ function validateAdminEditForm(form: AdminEditFormState): AdminEditErrors {
 
   return errors
 }
+
+
+async function createSignedReceiptUrl(receiptPath?: string | null) {
+  if (!receiptPath) return null
+
+  const { data, error } = await supabase.storage
+    .from(MEMBERSHIP_RECEIPT_BUCKET)
+    .createSignedUrl(receiptPath, RECEIPT_SIGNED_URL_TTL_SECONDS)
+
+  if (error || !data?.signedUrl) return null
+
+  return data.signedUrl
+}
+
+async function fetchMembershipPaymentByMemberId(memberId: string) {
+  const { data, error } = await (supabase as any)
+    .from('membership_payments')
+    .select('*')
+    .eq('member_id', memberId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw error
+
+  return data
+}
+
+async function fetchMembershipPaymentWithReceiptUrl(memberId: string): Promise<{
+  payment: MembershipPayment | null
+  receiptSignedUrl: string | null
+  errorMessage?: string
+}> {
+  try {
+    const payment = await fetchMembershipPaymentByMemberId(memberId)
+    const receiptSignedUrl = await createSignedReceiptUrl(payment?.receipt_path)
+
+    return {
+      payment,
+      receiptSignedUrl,
+      errorMessage:
+        payment?.receipt_path && !receiptSignedUrl
+          ? 'Receipt file not available.'
+          : undefined,
+    }
+  } catch (err) {
+    return {
+      payment: null,
+      receiptSignedUrl: null,
+      errorMessage:
+        err instanceof Error
+          ? `Payment record could not be loaded: ${err.message}`
+          : 'Payment record could not be loaded.',
+    }
+  }
+}
+
+function formatPaymentMethod(payment: MembershipPayment) {
+  return prettifyPaymentValue(payment.payment_method)
+}
+
+function formatGatewayProvider(payment: MembershipPayment) {
+  const provider = payment.gateway_provider || payment.payment_method
+
+  return prettifyPaymentValue(provider)
+}
+
+function prettifyPaymentValue(value: string | null | undefined) {
+  if (!value) return null
+
+  return value
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
 
 function getLocale(language: string) {
   return language === 'ur' ? 'ur-PK' : language === 'sd' ? 'sd-PK' : 'en-PK'

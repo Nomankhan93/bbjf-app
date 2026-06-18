@@ -71,10 +71,10 @@ Run migrations locally with Supabase CLI, or apply them in Supabase Cloud SQL ed
 Important latest migration:
 
 ```txt
-supabase/migrations/20260613120000_bbjf_constraints_and_payment_cleanup.sql
+supabase/migrations/20260618150000_bbjf_membership_payment_rs500.sql
 ```
 
-It fixes district/gender constraint mismatch and disables deprecated payment access.
+It re-enables the BBJF membership payment workflow with a fixed Rs. 500 fee, private receipt uploads, and admin payment verification policies. The earlier `20260613120000_bbjf_constraints_and_payment_cleanup.sql` migration is still part of history and should remain in order.
 
 ## Admin Setup
 

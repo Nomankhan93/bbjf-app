@@ -1,5 +1,7 @@
 # BBJF Member Experience Patch v3
 
+> Note: Payment was re-enabled later by `BBJF_PAYMENT_RS500_PATCH.md` with a Rs. 500 membership-fee workflow. Older payment-cleanup notes in this file are historical.
+
 This patch is intended to be applied after:
 
 1. `bbjf-jas-improvements-patch-v1.zip`
